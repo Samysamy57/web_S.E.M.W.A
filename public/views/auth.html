@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S.E.M.W.A — Sign In</title>
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+
+<div class="auth-wrap">
+
+  <!-- Hero -->
+  <div class="auth-hero">
+    <div>
+      <div class="auth-hero-tag">✦ S.E.M.W.A Platform</div>
+      <h2>Manage <em>events</em><br>that matter.</h2>
+      <p>From intimate workshops to large-scale conferences — create, discover, and connect.</p>
+      <div class="auth-features">
+        <div class="auth-feat"><span class="feat-dot"></span>Real-time analytics & ticketing</div>
+        <div class="auth-feat"><span class="feat-dot"></span>Multi-role access control</div>
+        <div class="auth-feat"><span class="feat-dot"></span>Integrated messaging system</div>
+      </div>
+    </div>
+    <div class="auth-stats">
+      <div class="auth-stat"><div class="num">12k+</div><div class="lbl">Events hosted</div></div>
+      <div class="auth-stat"><div class="num">98k</div><div class="lbl">Attendees</div></div>
+      <div class="auth-stat"><div class="num">4.9★</div><div class="lbl">Avg. rating</div></div>
+    </div>
+  </div>
+
+  <!-- Form side -->
+  <div class="auth-form-side">
+
+    <!-- Role picker (register only) -->
+    <div id="role-picker-wrap" style="display:none">
+      <div class="role-picker">
+        <button type="button" class="role-btn active" data-role="attendee">
+          <span class="role-icon">🎟️</span>Attendee
+        </button>
+        <button type="button" class="role-btn" data-role="organizer">
+          <span class="role-icon">🎤</span>Organizer
+        </button>
+      </div>
+    </div>
+
+    <h1 class="form-title">Welcome back</h1>
+    <p class="form-subtitle">Sign in to your S.E.M.W.A account</p>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
+      <div class="tab" id="tab-register" onclick="switchTab('register')">Create Account</div>
+    </div>
+
+    <!-- Alert -->
+    <div id="alert" class="alert"></div>
+
+    <!-- Login form -->
+    <div id="form-login">
+      <div class="form-group">
+        <label for="login-email">Email address</label>
+        <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password <span class="forgot" onclick="forgotPassword()">Forgot?</span></label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="btn-login" onclick="handleLogin()">Sign In</button>
+      <div class="divider">or</div>
+      <button class="btn-ghost" onclick="switchTab('register')">Create a free account</button>
+    </div>
+
+    <!-- Register form -->
+    <div id="form-register" style="display:none">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="reg-first">First name</label>
+          <input type="text" id="reg-first" placeholder="Peter" autocomplete="given-name">
+        </div>
+        <div class="form-group">
+          <label for="reg-last">Last name</label>
+          <input type="text" id="reg-last" placeholder="Parker" autocomplete="family-name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="reg-email">Email address</label>
+        <input type="email" id="reg-email" placeholder="Peter@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="reg-password">Password</label>
+        <input type="password" id="reg-password" placeholder="Min. 8 characters" autocomplete="new-password">
+      </div>
+      <button class="btn-primary" id="btn-register" onclick="handleRegister()">Create Account</button>
+      <div class="form-footer">Already have an account? <a href="#" onclick="switchTab('login')">Sign in</a></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+</body>
+</html>
