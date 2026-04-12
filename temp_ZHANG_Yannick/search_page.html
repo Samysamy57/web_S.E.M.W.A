@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+     <script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+</script>
+</head>
+<body>
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="Rechercher..." />
+  <button id="searchBtn">Search</button>
+</div>
+</body>
+</html>
+<script>
+const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
+searchBtn.addEventListener("click", () => {
+    const value = searchInput.value.trim();
+    console.log("Recherche :", value);
+    socket.emit("chat message", value); 
+});
+       
+</script>
