@@ -16,6 +16,7 @@ CREATE TABLE users (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role  ON users(role);
 
+<<<<<<< HEAD
 
 CREATE TABLE conversations (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -77,6 +78,8 @@ CREATE INDEX idx_messages_created_at
 CREATE TRIGGER trg_messages_updated_at
   BEFORE UPDATE ON messages
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+=======
+>>>>>>> 7d9a84a914d96001583e64e38b500f9fb7a0cc54
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
