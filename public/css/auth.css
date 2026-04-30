@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue: #1B4FD8; --blue-l: #EEF3FF; --blue-m: #C3D2FF;
+  --teal: #0D9488; --teal-l: #F0FDFA;
+  --red: #DC2626; --red-l: #FEF2F2;
+  --slate: #1E293B; --slate2: #334155; --slate3: #64748B; --slate4: #94A3B8;
+  --border: #E2E8F0; --bg: #F8FAFC; --white: #fff;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--slate);
+  min-height: 100vh;
+}
+
+/* ── Layout ── */
+.auth-wrap {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 768px) {
+  .auth-wrap { grid-template-columns: 1fr; }
+  .auth-hero  { display: none; }
+}
+
+/* ── Hero panel ── */
+.auth-hero {
+  background: linear-gradient(145deg, #1B4FD8 0%, #1e40af 60%, #0D9488 100%);
+  padding: 64px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.auth-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/svg%3E");
+}
+.auth-hero-tag {
+  display: inline-block;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 99px;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  width: fit-content;
+  position: relative;
+}
+.auth-hero h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 2.6rem;
+  line-height: 1.1;
+  position: relative;
+  margin-top: 28px;
+}
+.auth-hero h2 em { font-style: italic; color: rgba(255,255,255,.75); }
+.auth-hero p {
+  color: rgba(255,255,255,.7);
+  line-height: 1.6;
+  font-size: .93rem;
+  margin-top: 14px;
+  position: relative;
+}
+.auth-features { display: flex; flex-direction: column; gap: 10px; position: relative; margin-top: 32px; }
+.auth-feat { display: flex; align-items: center; gap: 12px; font-size: .84rem; color: rgba(255,255,255,.85); }
+.feat-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.5); flex-shrink: 0; }
+.auth-stats { display: flex; gap: 32px; position: relative; }
+.auth-stat .num { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 700; }
+.auth-stat .lbl { font-size: .72rem; color: rgba(255,255,255,.6); margin-top: 2px; }
+
+/* ── Form side ── */
+.auth-form-side {
+  background: var(--white);
+  padding: 64px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ── Role picker ── */
+.role-picker { display: flex; gap: 10px; margin-bottom: 24px; }
+.role-btn {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: none;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--slate3);
+  transition: .2s;
+  text-align: center;
+}
+.role-btn.active { border-color: var(--blue); background: var(--blue-l); color: var(--blue); }
+.role-btn:hover:not(.active) { border-color: var(--blue-m); }
+.role-icon { font-size: 1.3rem; display: block; margin-bottom: 3px; }
+
+/* ── Tabs ── */
+.tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+.tab {
+  padding: 10px 20px;
+  font-size: .86rem;
+  font-weight: 600;
+  color: var(--slate3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: .2s;
+}
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* ── Form elements ── */
+.form-title { font-family: 'Fraunces', serif; font-size: 1.8rem; margin-bottom: 4px; }
+.form-subtitle { color: var(--slate3); font-size: .86rem; margin-bottom: 28px; }
+.form-group { margin-bottom: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-footer { text-align: center; margin-top: 16px; font-size: .82rem; color: var(--slate3); }
+.form-footer a { color: var(--blue); text-decoration: none; font-weight: 600; }
+.forgot { float: right; font-size: .78rem; color: var(--blue); text-decoration: none; font-weight: 600; cursor: pointer; }
+.forgot:hover { text-decoration: underline; }
+.divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--slate4); font-size: .8rem; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--slate2);
+  margin-bottom: 6px;
+  letter-spacing: .02em;
+}
+input[type=text], input[type=email], input[type=password] {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: .9rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--slate);
+  outline: none;
+  transition: .2s;
+  background: var(--bg);
+}
+input:focus { border-color: var(--blue); background: #fff; box-shadow: 0 0 0 3px rgba(27,79,216,.1); }
+
+/* ── Buttons ── */
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: .92rem;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: .2s;
+}
+.btn-primary:hover { background: #1844c0; box-shadow: 0 4px 12px rgba(27,79,216,.3); }
+.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+.btn-ghost {
+  width: 100%;
+  padding: 12px;
+  background: #fff;
+  color: var(--slate2);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: .88rem;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: .2s;
+}
+.btn-ghost:hover { border-color: var(--slate3); background: var(--bg); }
+
+/* ── Alert ── */
+.alert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: .84rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: none;
+}
+.alert.error { background: var(--red-l); color: var(--red); display: block; }
+.alert.success { background: #DCFCE7; color: #16A34A; display: block; }

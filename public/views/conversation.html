@@ -1,0 +1,43 @@
+  <!DOCTYPE html>
+  <html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mes conversations</title>
+    <link rel="stylesheet" href="/css/conversation.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>Mes conversations</h1>
+
+    
+      <section class="create-conversation">
+        <input 
+          type="text" 
+          id="receiver-id" 
+          placeholder="ID de l'utilisateur..." 
+        />
+        <button id="create-convo-btn">Créer conversation</button>
+      </section>
+
+      <!-- Liste des conversations -->
+      <section id="conversation-list" class="conversation-list">
+        <p>Chargement...</p>
+      </section>
+
+    
+      <section id="chat-section" class="chat-section">
+        <div id="messages" class="messages"></div>
+
+        <div class="chat-input">
+          <input type="text" id="message-input" placeholder="Message..." />
+          <button id="send-btn">Envoyer</button>
+        </div>
+      </section>
+
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/conversations.js"></script>
+  </body>
+  </html>
