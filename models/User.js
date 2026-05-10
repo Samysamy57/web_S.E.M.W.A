@@ -1,3 +1,4 @@
+// C:\Users\samyb\StudioProjects\web_S.E.M.W.A\models\User.js
 import pool from '../config/db.js';
 
 const SAFE_FIELDS = 'id, username, first_name, last_name, email, role, avatar_url, is_active, created_at';
@@ -19,7 +20,7 @@ const User = {
     return rows[0] ?? null;
   },
 
-  async create({ firstName, lastName, email, passwordHash, username, role = 'attendee' }) {
+async create({ firstName, lastName, email, passwordHash, username, role = 'attendee' }) {
     const { rows } = await pool.query(
       `INSERT INTO users (first_name, last_name, email, password_hash, username, role)
        VALUES ($1, $2, $3, $4, $5, $6)
@@ -42,19 +43,16 @@ const User = {
     const params = [];
     const conditions = [];
 
-    // Recherche ILIKE sur nom, prénom, email
     if (search) {
       params.push(`%${search}%`);
       conditions.push(`(first_name ILIKE $${params.length} OR last_name ILIKE $${params.length} OR email ILIKE $${params.length})`);
     }
 
-    // Filtre par rôle
     if (role && ['attendee', 'organizer', 'admin'].includes(role)) {
       params.push(role);
       conditions.push(`role = $${params.length}`);
     }
 
-    // Mapping sort → ORDER BY (protection injection SQL)
     const sortMap = {
       name_asc:  'first_name ASC',
       name_desc: 'first_name DESC',
@@ -70,7 +68,6 @@ const User = {
     );
     return rows;
   },
-
 
   // Active ou désactive un compte user
   async updateUserStatus(userId, isActive) {

@@ -1,3 +1,4 @@
+// C:\Users\samyb\StudioProjects\web_S.E.M.W.A\models\ConversationModel.js
 import pool from '../config/db.js';
 
 const Conversation = {

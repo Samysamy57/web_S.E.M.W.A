@@ -12,6 +12,7 @@ export async function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Session expired. Please log in again.' });
   }
 
+  // Charge l'utilisateur complet depuis la DB → req.user.id sera disponible
   const user = await User.findById(req.user.sub);
   if (!user) {
     res.clearCookie('token');
@@ -21,7 +22,6 @@ export async function requireAuth(req, res, next) {
   req.user = user;
   next();
 }
-
 
 export function requireRole(...roles) {
   return (req, res, next) => {
