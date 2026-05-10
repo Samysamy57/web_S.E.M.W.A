@@ -1,11 +1,15 @@
+// C:\Users\samyb\StudioProjects\web_S.E.M.W.A\routes\authRoutes.js
 import { Router } from 'express';
-import { register, login, logout } from '../controllers/authController.js';
+import { register, login, logout, registerAdminRequest, me } from '../controllers/authController.js';
 import { asyncWrap } from '../middlewares/asyncWrap.js';
+import { requireAuth } from '../middlewares/auth.js';
 
 const router = Router();
 
-router.post('/register', asyncWrap(register));
-router.post('/login',    asyncWrap(login));
-router.get('/logout',    logout);
+router.post('/register',       asyncWrap(register));
+router.post('/login',          asyncWrap(login));
+router.get('/logout',          logout);
+router.post('/register-admin', asyncWrap(registerAdminRequest));
+router.get('/me',              requireAuth, me);
 
 export default router;
