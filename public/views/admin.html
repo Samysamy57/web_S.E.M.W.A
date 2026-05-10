@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S.E.M.W.A — Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+
+<!-- ── Topbar ── -->
+<header class="topbar">
+  <div class="topbar-logo">S</div>
+  <span class="topbar-title">S.E.M.W.A</span>
+  <span class="topbar-badge">ADMIN PANEL</span>
+</header>
+
+<!-- ── Auth overlay (caché après connexion) ── -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <h2>Admin Panel</h2>
+    <p>Connectez-vous ou faites une demande de compte administrateur.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Se connecter</button>
+      <button class="auth-tab"        onclick="switchAuthTab('register')">Demander accès</button>
+    </div>
+
+    <!-- Formulaire LOGIN -->
+    <div id="tab-login">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="admin@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Connexion</button>
+      <div class="auth-error" id="login-error"></div>
+    </div>
+
+    <!-- Formulaire REGISTER ADMIN -->
+    <div id="tab-register" class="section-hidden">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom</label>
+          <input type="text" id="reg-firstname" placeholder="Jean" />
+        </div>
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" id="reg-lastname" placeholder="Dupont" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="jean@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" id="reg-password" placeholder="••••••••" />
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doRegisterAdmin()">Envoyer la demande</button>
+      <div class="auth-error" id="reg-error"></div>
+      <div class="auth-info"  id="reg-info"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Dashboard principal ── -->
+<div class="dash-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-section" style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 10px;margin-bottom:18px">
+        <div style="width:30px;height:30px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:#fff">S</div>
+        <span style="font-size:.83rem;font-weight:700;color:#fff">S.E.M.W.A</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <div class="sb-item active" id="nav-dashboard" onclick="showSection('dashboard')">
+        <span class="sb-icon">📊</span><span>Dashboard</span>
+      </div>
+      <div class="sb-item" id="nav-users" onclick="showSection('users')">
+        <span class="sb-icon">👥</span><span>Utilisateurs</span>
+      </div>
+      <div class="sb-item" id="nav-events" onclick="showSection('events')">
+        <span class="sb-icon">🗓</span><span>Événements</span>
+        <span class="sb-count alert" id="events-count" style="display:none">0</span>
+      </div>
+      <div class="sb-item" id="nav-requests" onclick="showSection('requests')">
+        <span class="sb-icon">🔑</span><span>Demandes Admin</span>
+        <span class="sb-count alert" id="requests-count" style="display:none">0</span>
+      </div>
+      <div class="sb-item" id="nav-messages" onclick="showSection('messages')">
+        <span class="sb-icon">✉️</span><span>Messages</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="margin-top:14px">
+      <div class="sidebar-label">Compte</div>
+      <div class="sb-item" onclick="doLogout()">
+        <span class="sb-icon">🚪</span><span>Déconnexion</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="user-avatar" id="sidebar-avatar">?</div>
+        <div>
+          <div class="user-name" id="sidebar-name">—</div>
+          <div class="user-role">Administrateur</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="dash-main">
+
+    <!-- ── SECTION : DASHBOARD ── -->
+    <div id="section-dashboard">
+      <div class="dash-header">
+        <div>
+          <h1 id="welcome-msg">Bonjour 👋</h1>
+          <p>Vue d'ensemble de la plateforme</p>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi" onclick="showSection('users')" style="cursor:pointer">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--blue-l)">👥</div>
+            <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Total</span>
+          </div>
+          <div class="kpi-num" id="kpi-users">—</div>
+          <div class="kpi-lbl">Utilisateurs</div>
+        </div>
+        <div class="kpi" onclick="showSection('requests')" style="cursor:pointer">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#FEF9C3">🔑</div>
+            <span class="kpi-delta" style="background:#FEF9C3;color:#B45309">En attente</span>
+          </div>
+          <div class="kpi-num" id="kpi-requests">—</div>
+          <div class="kpi-lbl">Demandes Admin</div>
+        </div>
+        <div class="kpi" onclick="showSection('users')" style="cursor:pointer">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#FEE2E2">🚫</div>
+            <span class="kpi-delta" style="background:#FEE2E2;color:#DC2626">Inactifs</span>
+          </div>
+          <div class="kpi-num" id="kpi-banned">—</div>
+          <div class="kpi-lbl">Comptes bannis</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Aperçu rapide — Derniers utilisateurs</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody id="dashboard-users-tbody">
+            <tr><td colspan="4" class="empty-state">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── SECTION : UTILISATEURS ── -->
+    <div id="section-users" class="section-hidden">
+      <div class="dash-header">
+        <div>
+          <h1>Gestion des utilisateurs</h1>
+          <p>Bannir ou réactiver des comptes</p>
+        </div>
+        <button class="btn btn-primary" onclick="loadUsers()">↻ Rafraîchir</button>
+      </div>
+
+      <!-- Barre de filtres -->
+      <div class="filter-bar">
+
+        <!-- Recherche -->
+        <div class="filter-search-wrap">
+          <span class="filter-icon">🔍</span>
+          <input
+            type="text"
+            id="filter-search"
+            class="filter-input"
+            placeholder="Rechercher par nom ou email…"
+          />
+        </div>
+
+        <div class="filter-bar-divider"></div>
+
+        <!-- Filtre rôle -->
+        <div class="filter-group">
+          <span class="filter-label">Rôle</span>
+          <select id="filter-role" class="filter-select">
+            <option value="">Tous les rôles</option>
+            <option value="attendee">Attendee</option>
+            <option value="organizer">Organizer</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        <!-- Filtre tri -->
+        <div class="filter-group">
+          <span class="filter-label">Trier par</span>
+          <select id="filter-sort" class="filter-select">
+            <option value="date_desc">Plus récents</option>
+            <option value="date_asc">Plus anciens</option>
+            <option value="name_asc">A → Z</option>
+            <option value="name_desc">Z → A</option>
+          </select>
+        </div>
+
+        <div class="filter-bar-divider"></div>
+
+        <!-- Réinitialiser -->
+        <button class="btn-reset" onclick="resetFilters()">
+          ↺ Réinitialiser
+        </button>
+
+      </div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>Statut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="5" class="empty-state">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── SECTION : ÉVÉNEMENTS ── -->
+    <div id="section-events" class="section-hidden">
+      <div class="dash-header">
+        <div>
+          <h1>Modération des événements</h1>
+          <p>Approuver ou refuser les événements soumis par les organisateurs</p>
+        </div>
+        <button class="btn btn-primary" onclick="loadEvents()">↻ Rafraîchir</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Organisateur</th>
+              <th>Date de l'événement</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="events-tbody">
+            <tr><td colspan="5" class="empty-state">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── SECTION : MESSAGES ── -->
+    <div id="section-messages" class="section-hidden">
+      <div class="dash-header">
+        <div>
+          <h1>Messages</h1>
+          <p>Système de messagerie interne</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="empty-state" style="padding:48px 32px">
+          <div style="font-size:2.5rem;margin-bottom:12px">✉️</div>
+          <div style="font-weight:700;color:var(--slate3);margin-bottom:6px">Module Messagerie bientôt disponible</div>
+          <div style="font-size:.78rem;color:var(--slate4)">(Yannick)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION : DEMANDES ADMIN ── -->
+    <div id="section-requests" class="section-hidden">
+      <div class="dash-header">
+        <div>
+          <h1>Demandes Admin</h1>
+          <p>Approuver ou refuser les demandes de compte administrateur</p>
+        </div>
+        <button class="btn btn-primary" onclick="loadRequests()">↻ Rafraîchir</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Date de demande</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="requests-tbody">
+            <tr><td colspan="4" class="empty-state">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>
