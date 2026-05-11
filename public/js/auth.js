@@ -72,7 +72,11 @@ async function handleLogin() {
   try {
     const { user } = await post('/api/auth/login', { email, password });
     showAlert(`Welcome back, ${user.first_name}! Redirecting…`, 'success');
-    setTimeout(() => { window.location.href = '/dashboard'; }, 1200);
+    let dest;
+    if (user.role === 'admin') dest = '/admin';
+    else if (user.role === 'organizer') dest = '/dashboard';
+    else dest = '/acceuil';
+    setTimeout(() => { window.location.href = dest; }, 1200);
   } catch (err) {
     showAlert(err.message);
   } finally {
@@ -108,7 +112,11 @@ async function handleRegister() {
       firstName, lastName, email, password, role: activeRole,
     });
     showAlert(`Account created! Welcome, ${user.first_name}! Redirecting…`, 'success');
-    setTimeout(() => { window.location.href = '/dashboard'; }, 1200);
+    let dest;
+    if (user.role === 'admin') dest = '/admin';
+    else if (user.role === 'organizer') dest = '/dashboard';
+    else dest = '/acceuil';
+    setTimeout(() => { window.location.href = dest; }, 1200);
   } catch (err) {
     showAlert(err.message);
   } finally {

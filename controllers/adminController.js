@@ -1,7 +1,9 @@
+// C:\Users\samyb\StudioProjects\web_S.E.M.W.A\controllers\adminController.js
 import User from '../models/User.js';
 import AdminRequest from '../models/AdminRequestModel.js';
 import Event from '../models/EventModel.js';
-
+import Conversation from '../models/ConversationModel.js';
+import Message from '../models/messageModel.js';
 // GET /api/admin/users
 export async function getUsers(req, res) {
   const { search, role, sort } = req.query;
@@ -83,4 +85,37 @@ export async function handleAdminRequest(req, res) {
   if (!result) return res.status(404).json({ error: 'Request not found.' });
 
   return res.status(200).json({ message: `Request ${action}d.`, result });
+}
+
+// POST /api/admin/messages/support/:userId — ouvre ou crée le ticket support
+export async function openSupportConversation(req, res) {
+  const { userId } = req.params;
+  const conversation = await Conversation.getOrCreateSupportConversation(userId);
+  return res.status(200).json({ conversationId: conversation.id });
+}
+
+// POST /api/admin/messages/send
+export async function sendAdminMessage(req, res) {
+  const { conversationId, content } = req.body;
+  const senderId = req.user.id;
+
+  if (!conversationId || !content) {
+    return res.status(400).json({ error: 'conversationId and content are required.' });
+  }
+
+  const message = await Message.create({ conversationId, senderId, content, messageType: 'text' });
+  return res.status(201).json({ message });
+}
+
+// GET /api/admin/messages/conversations
+export async function getAllMessagesConversations(_req, res) {
+  const conversations = await Conversation.getAllConversationsAdmin();
+  return res.status(200).json({ conversations });
+}
+
+// GET /api/admin/messages/conversation/:id
+export async function getConversationMessagesById(req, res) {
+  const { id } = req.params;
+  const messages = await Message.getByConversationId(id);
+  return res.status(200).json({ messages });
 }

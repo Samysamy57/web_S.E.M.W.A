@@ -14,14 +14,14 @@ export async function requireAuth(req, res, next) {
 
   // Charge l'utilisateur complet depuis la DB → req.user.id sera disponible
   const user = await User.findById(req.user.sub);
-  if (!user) {
+  if (!user || !user.is_active) {
     res.clearCookie('token');
     return res.status(401).json({ error: 'Session expirée ou compte désactivé.' });
   }
-
+  // On attache l'objet complet — req.user.id, req.user.role, etc. sont disponibles
   req.user = user;
-  next();
-}
+    next();
+  }
 
 export function requireRole(...roles) {
   return (req, res, next) => {

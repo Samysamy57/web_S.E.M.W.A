@@ -8,9 +8,12 @@ import { Server } from 'socket.io';
 
 import initSocket from './socketserv.js';
 import authRoutes from './routes/authRoutes.js';
+import { requireAuth } from './middlewares/authMiddleware.js';
 import adminRoutes from './routes/adminRoutes.js';
 import messageRoutes from './routes/routes_messages.js';
 import searchRoutes from './routes/routes_search.js';
+import eventRoutes     from './routes/eventRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -37,6 +40,8 @@ app.use('/api/auth',     authRoutes);
 app.use('/api/admin',    adminRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/search',   searchRoutes);
+app.use('/api/events',    eventRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Pages HTML
 app.get('/', (_req, res) => {
@@ -56,6 +61,12 @@ app.get('/search', (_req, res) => {
 });
 app.get('/result', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'views', 'result.html'));
+});
+app.get('/acceuil', requireAuth, (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'acceuil.html'));
+});
+app.get('/dashboard', requireAuth, (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
 });
 
 // 404

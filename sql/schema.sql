@@ -38,6 +38,7 @@ CREATE TABLE admin_requests (
 );
 
 -- ─── EVENTS ─────────────────────────────────────────────
+CREATE TYPE event_category AS ENUM ('conferences', 'tech', 'arts', 'music', 'workshops', 'sports', 'food');
 CREATE TYPE event_status AS ENUM ('draft', 'published', 'cancelled', 'completed');
 CREATE TYPE event_participant_status AS ENUM ('registered', 'waitlisted', 'cancelled', 'attended');
 
@@ -53,6 +54,7 @@ CREATE TABLE events (
   start_date       TIMESTAMPTZ  NOT NULL,
   end_date         TIMESTAMPTZ,
   max_participants INTEGER CHECK (max_participants IS NULL OR max_participants > 0),
+  category         event_category,
   status           event_status NOT NULL DEFAULT 'draft',
   created_by       UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -132,6 +134,20 @@ CREATE TABLE messages (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ─── EVENT REVIEWS ──────────────────────────────────────
+CREATE TABLE event_reviews (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id   UUID        NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  user_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  rating     INT         NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment    TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (event_id, user_id)
+);
+
+CREATE INDEX idx_reviews_event ON event_reviews(event_id);
+CREATE INDEX idx_reviews_user  ON event_reviews(user_id);
 
 CREATE INDEX idx_messages_conversation ON messages(conversation_id);
 CREATE INDEX idx_messages_sender       ON messages(sender_id);

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S.E.M.W.A — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    /* Variables reprises du mockup */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --blue:#1B4FD8;--blue-l:#EEF3FF;--blue-m:#C3D2FF;
+      --teal:#0D9488;--teal-l:#F0FDFA;
+      --amber:#D97706;--amber-l:#FFFBEB;
+      --red:#DC2626;--red-l:#FEF2F2;
+      --green:#16A34A;--green-l:#DCFCE7;
+      --slate:#1E293B;--slate2:#334155;--slate3:#64748B;--slate4:#94A3B8;
+      --border:#E2E8F0;--bg:#F8FAFC;--white:#fff;
+      --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+      --shadow-lg:0 8px 32px rgba(0,0,0,.12);
+    }
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--slate);min-height:100vh}
+
+    /* Layout dashboard */
+    .dash-layout{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+
+    /* Sidebar */
+    .sidebar{background:var(--slate);color:#fff;padding:20px 0;display:flex;flex-direction:column;}
+    .sidebar-section{padding:0 14px;margin-bottom:6px}
+    .sidebar-label{font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 10px;margin-bottom:5px;}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:.8rem;font-weight:500;color:rgba(255,255,255,.65);cursor:pointer;transition:.15s;margin-bottom:2px;text-decoration:none;}
+    .sb-item:hover{background:rgba(255,255,255,.1);color:#fff}
+    .sb-item.active{background:var(--blue);color:#fff}
+    .sb-icon{width:17px;text-align:center;font-size:.92rem;flex-shrink:0}
+    .sb-count{margin-left:auto;background:rgba(255,255,255,.15);border-radius:99px;font-size:.63rem;padding:2px 7px;font-weight:700}
+    .sb-count.alert{background:#EF4444;color:#fff}
+    .sidebar-footer{margin-top:auto;padding:14px;border-top:1px solid rgba(255,255,255,.1)}
+    .user-avatar{width:34px;height:34px;border-radius:9px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;flex-shrink:0;}
+    .user-name{font-size:.8rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .user-role{font-size:.68rem;color:rgba(255,255,255,.5)}
+
+    /* Main */
+    .dash-main{background:var(--bg);padding:24px 28px;overflow-y:auto}
+    .dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+    .dash-header h1{font-family:'Fraunces',serif;font-size:1.6rem}
+    .dash-header p{color:var(--slate3);font-size:.83rem;margin-top:2px}
+    .btn-create{display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s;text-decoration:none;}
+    .btn-create:hover{background:#1844c0;box-shadow:0 4px 12px rgba(27,79,216,.3)}
+
+    /* KPIs */
+    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .kpi{background:#fff;border-radius:14px;padding:18px;border:1px solid var(--border);cursor:pointer;transition:.2s}
+    .kpi:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+    .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .kpi-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+    .kpi-delta{font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:99px}
+    .kpi-num{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:700;line-height:1}
+    .kpi-lbl{font-size:.73rem;color:var(--slate3);margin-top:4px}
+
+    /* Grid */
+    .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-bottom:18px}
+    .card{background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px}
+    .card-title{font-size:.88rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+    .card-title a{font-size:.75rem;color:var(--blue);font-weight:500;text-decoration:none;cursor:pointer}
+
+    /* Event rows */
+    .event-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;border-radius:6px;}
+    .event-row:hover{background:var(--bg);padding-left:6px}
+    .event-row:last-child{border-bottom:none;padding-bottom:0}
+    .event-thumb{width:42px;height:42px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+    .event-row-info{flex:1;min-width:0}
+    .event-row-info h4{font-size:.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .event-row-info span{font-size:.72rem;color:var(--slate3)}
+    .sold{font-size:.8rem;font-weight:700;color:var(--slate)}
+    .cap{font-size:.68rem;color:var(--slate4)}
+    .progress-bar{height:4px;background:var(--border);border-radius:2px;margin-top:3px;width:68px}
+    .progress-fill{height:100%;border-radius:2px;background:var(--blue)}
+    .status-badge{display:inline-flex;padding:3px 9px;border-radius:99px;font-size:.67rem;font-weight:700;letter-spacing:.03em;}
+
+    /* Notifs */
+    .notif-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;}
+    .notif-item:hover{background:var(--bg);padding-left:6px;border-radius:6px}
+    .notif-item:last-child{border-bottom:none;padding-bottom:0}
+    .notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+    .notif-item p{font-size:.78rem;color:var(--slate2);line-height:1.4}
+    .notif-item time{font-size:.7rem;color:var(--slate4);display:block;margin-top:2px}
+
+    /* Chart */
+    .chart-bars{display:flex;align-items:flex-end;gap:6px;height:76px;padding-top:8px}
+    .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+    .bar{border-radius:4px 4px 0 0;width:100%;transition:.3s}
+    .bar-lbl{font-size:.64rem;color:var(--slate4)}
+
+    /* Skeleton loader */
+    .skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;display:inline-block;}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  </style>
+</head>
+<body>
+
+<div class="dash-layout">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-section" style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 10px;margin-bottom:18px">
+        <div style="width:30px;height:30px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:#fff">S</div>
+        <span style="font-size:.83rem;font-weight:700;color:#fff">S.E.M.W.A</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Main</div>
+      <a class="sb-item active" href="/dashboard">📊 <span>Dashboard</span></a>
+      <a class="sb-item" href="#">🗓 <span>My Events</span><span class="sb-count" id="sb-events-count">–</span></a>
+      <a class="sb-item" href="#">🎫 <span>Tickets</span></a>
+      <a class="sb-item" href="#">👥 <span>Attendees</span></a>
+    </div>
+
+    <div class="sidebar-section" style="margin-top:14px">
+      <div class="sidebar-label">Communication</div>
+      <a class="sb-item" href="/conversation">✉️ <span>Messages</span></a>
+      <a class="sb-item" href="#">🔔 <span>Notifications</span></a>
+    </div>
+
+    <div class="sidebar-section" style="margin-top:14px">
+      <div class="sidebar-label">Analytics</div>
+      <a class="sb-item" href="#">📈 <span>Reports</span></a>
+      <a class="sb-item" href="#">💳 <span>Revenue</span></a>
+    </div>
+
+    <div class="sidebar-section" style="margin-top:14px">
+      <div class="sidebar-label">Settings</div>
+      <a class="sb-item" href="#">👤 <span>My profile</span></a>
+      <a class="sb-item" href="#">⚙️ <span>Settings</span></a>
+      <a class="sb-item" href="#" id="btn-signout">🚪 <span>Sign out</span></a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <!-- Initiales chargées dynamiquement -->
+        <div class="user-avatar" id="sidebar-avatar">–</div>
+        <div>
+          <div class="user-name" id="sidebar-name">Loading…</div>
+          <div class="user-role">Organizer</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <main class="dash-main">
+
+    <!-- Header -->
+    <div class="dash-header">
+      <div>
+        <h1 id="dash-greeting">Good morning 👋</h1>
+        <p>Here's what's happening with your events today</p>
+      </div>
+      <a class="btn-create" href="/create-event">+ Create new event</a>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon" style="background:var(--blue-l)">🗓</div>
+          <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Active</span>
+        </div>
+        <div class="kpi-num" id="kpi-events"><span class="skeleton" style="width:40px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
+        <div class="kpi-lbl">Active events</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon" style="background:#FEF9C3">🎫</div>
+          <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Total</span>
+        </div>
+        <div class="kpi-num" id="kpi-tickets"><span class="skeleton" style="width:50px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
+        <div class="kpi-lbl">Tickets sold</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon" style="background:#F0FDF4">💰</div>
+          <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Revenue</span>
+        </div>
+        <div class="kpi-num" id="kpi-revenue"><span class="skeleton" style="width:60px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
+        <div class="kpi-lbl">Total revenue</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon" style="background:#FDF4FF">⭐</div>
+          <span class="kpi-delta" style="background:#FEF9C3;color:#B45309">Rating</span>
+        </div>
+        <div class="kpi-num" id="kpi-rating"><span class="skeleton" style="width:40px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
+        <div class="kpi-lbl">Avg. rating</div>
+      </div>
+    </div>
+
+    <!-- Grid principale -->
+    <div class="grid-2">
+
+      <!-- Carte : My Events -->
+      <div class="card">
+        <div class="card-title">My Events <a href="#">Manage all →</a></div>
+        <!-- Les lignes sont injectées par dashboard.js -->
+        <div id="events-list">
+          <p style="font-size:.82rem;color:var(--slate3)">Loading events…</p>
+        </div>
+      </div>
+
+      <!-- Colonne droite -->
+      <div style="display:flex;flex-direction:column;gap:18px">
+
+        <!-- Carte : Notifications statiques (pas d'API dédiée pour l'instant) -->
+        <div class="card">
+          <div class="card-title">Recent Notifications <a href="#">View all</a></div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:var(--blue)"></div>
+            <div><p><strong>New registration</strong> on one of your events</p><time>Just now</time></div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#10B981"></div>
+            <div><p>You received a <strong>new review</strong></p><time>1 hour ago</time></div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:#EF4444"></div>
+            <div><p>Unread <strong>messages</strong> from attendees</p><time>Today</time></div>
+          </div>
+        </div>
+
+        <!-- Carte : Chart statique (données réelles nécessiteraient une API /weekly) -->
+        <div class="card">
+          <div class="card-title">Weekly Registrations</div>
+          <div class="chart-bars" id="chart-bars">
+            <!-- Barres statiques — remplaçables par une vraie API plus tard -->
+            <div class="bar-wrap"><div class="bar" style="height:35%;background:var(--blue-m)"></div><div class="bar-lbl">Mon</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:55%;background:var(--blue-m)"></div><div class="bar-lbl">Tue</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:45%;background:var(--blue-m)"></div><div class="bar-lbl">Wed</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:70%;background:var(--blue-m)"></div><div class="bar-lbl">Thu</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:90%;background:var(--blue)"></div><div class="bar-lbl">Fri</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:60%;background:var(--blue-m)"></div><div class="bar-lbl">Sat</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:40%;background:var(--blue-m)"></div><div class="bar-lbl">Sun</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/js/dashboard.js"></script>
+</body>
+</html>
