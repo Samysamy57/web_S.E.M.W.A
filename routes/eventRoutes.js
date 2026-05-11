@@ -1,7 +1,7 @@
 // Fichier : routes/eventRoutes.js
 import express from 'express';
-import { getAllEvents, reserveSpot } from '../controllers/eventController.js';
-import { requireAuth } from '../middlewares/authMiddleware.js';
+import { getAllEvents, reserveSpot, createEvent } from '../controllers/eventController.js';
+import { requireAuth, requireRole } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -10,5 +10,5 @@ router.get('/', getAllEvents);
 
 // Réservation — utilisateur connecté obligatoire
 router.post('/book', requireAuth, reserveSpot);
-
+router.post('/', requireAuth, requireRole('organizer', 'admin'), createEvent);
 export default router;

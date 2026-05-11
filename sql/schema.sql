@@ -156,3 +156,16 @@ CREATE INDEX idx_messages_created_at   ON messages(created_at);
 CREATE TRIGGER trg_messages_updated_at
   BEFORE UPDATE ON messages
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+  ALTER TABLE events ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+
+-- Table des types de tickets par événement
+CREATE TABLE IF NOT EXISTS event_ticket_types (
+  id          UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id    UUID           NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  name        VARCHAR(100)   NOT NULL,
+  description TEXT,
+  price       DECIMAL(10,2)  NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_ticket_types_event ON event_ticket_types(event_id);
