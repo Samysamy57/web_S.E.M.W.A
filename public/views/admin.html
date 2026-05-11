@@ -1,3 +1,4 @@
+<!-- C:\Users\samyb\StudioProjects\web_S.E.M.W.A\public\views\admin.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,11 +8,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/admin.css" />
+  <link rel="stylesheet" href="/css/conversation.css" />
 </head>
 <body>
 
 <!-- ── Topbar ── -->
 <header class="topbar">
+  <button class="burger-btn" id="burger-btn" onclick="toggleSidebar()">☰</button>
   <div class="topbar-logo">S</div>
   <span class="topbar-title">S.E.M.W.A</span>
   <span class="topbar-badge">ADMIN PANEL</span>
@@ -279,20 +282,44 @@
       </div>
     </div>
 
-    <!-- ── SECTION : MESSAGES ── -->
-    <div id="section-messages" class="section-hidden">
-      <div class="dash-header">
-        <div>
-          <h1>Messages</h1>
-          <p>Système de messagerie interne</p>
+    <!-- ── SECTION : MESSAGES (modération, lecture seule) ── -->
+    <div id="section-messages" class="section-hidden section-messages-full">
+      <div class="messages-layout">
+
+        <!-- Sidebar conversations -->
+        <div class="msg-sidebar">
+          <div class="msg-sidebar-header">
+            <h2>Conversations</h2>
+          </div>
+          <div class="msg-search">
+            <input type="text" id="admin-msg-search" placeholder="Rechercher…" oninput="filterAdminConvos(this.value)" />
+          </div>
+          <div class="msg-list" id="admin-conversation-list">
+            <p style="padding:16px;font-size:.8rem;color:var(--slate3)">Chargement…</p>
+          </div>
         </div>
-      </div>
-      <div class="card">
-        <div class="empty-state" style="padding:48px 32px">
-          <div style="font-size:2.5rem;margin-bottom:12px">✉️</div>
-          <div style="font-weight:700;color:var(--slate3);margin-bottom:6px">Module Messagerie bientôt disponible</div>
-          <div style="font-size:.78rem;color:var(--slate4)">(Yannick)</div>
+
+        <!-- Zone messages -->
+        <div class="msg-main">
+          <div class="msg-header" id="admin-msg-header" style="display:none">
+            <div style="display:flex;flex-direction:column">
+              <div class="msg-title" id="admin-chat-title">—</div>
+              <div class="msg-subtitle" id="admin-chat-sub"></div>
+            </div>
+            <span id="admin-readonly-badge" style="margin-left:auto;font-size:.72rem;padding:4px 10px;border-radius:99px;background:#FEF9C3;color:#B45309;font-weight:700">👁 Lecture seule</span>
+          </div>
+
+          <div id="admin-no-convo" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--slate3);font-size:.88rem">
+            Sélectionne une conversation à modérer
+          </div>
+
+          <div class="msg-body" id="admin-msg-body" style="display:none"></div>
+          <div class="msg-input-row" id="admin-msg-input-row" style="display:none">
+            <input type="text" id="admin-msg-input" placeholder="Répondre en tant que Support…" />
+            <button class="msg-send-btn" id="admin-send-btn">➤</button>
+          </div>
         </div>
+
       </div>
     </div>
 
@@ -328,6 +355,7 @@
 <!-- Toast notification -->
 <div id="toast"></div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script src="/js/admin.js"></script>
 </body>
 </html>

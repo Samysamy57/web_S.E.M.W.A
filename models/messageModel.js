@@ -1,3 +1,4 @@
+// C:\Users\samyb\StudioProjects\web_S.E.M.W.A\models\messageModel.js
 import pool from '../config/db.js';
 
 const Message = {
@@ -17,14 +18,17 @@ const Message = {
   async getByConversationId(conversationId) {
     const { rows } = await pool.query(
       `
-      SELECT id, conversation_id, sender_id, content, message_type, created_at, updated_at
-      FROM messages
-      WHERE conversation_id = $1
-      ORDER BY created_at ASC
+      SELECT
+        m.id, m.conversation_id, m.sender_id,
+        m.content, m.message_type, m.created_at, m.updated_at,
+        u.role, u.first_name, u.last_name
+      FROM messages m
+      JOIN users u ON u.id = m.sender_id
+      WHERE m.conversation_id = $1
+      ORDER BY m.created_at ASC
       `,
       [conversationId]
     );
-
     return rows;
   }
 };

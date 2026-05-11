@@ -111,5 +111,6 @@ export function logout(_req, res) {
 }
 
 export function me(req, res) {
-  return res.status(200).json({ user: req.user });
+  const { id, first_name, last_name, email, role, avatar_url } = req.user;
+  return res.status(200).json({ id, first_name, last_name, email, role, avatar_url });
 }

@@ -13,8 +13,8 @@ io.on("connection", (socket) => {
 
   socket.on("chat message", (data) => {
     console.log("Message reçu :", data);
-    socket.join(data.room)
-    console.log(data.content)
+    socket.join(data.room);
+    console.log(data.content);
     io.to(data.room).emit("chat message", data.content);
   });
 

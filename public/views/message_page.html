@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+      <script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+</script>
+</head>
+<body>
+    <span>
+        <p id="place_message"> </p>
+    </span>
+    
+    <input type="text" id="sendInput" />
+    <button id="sendBtn">Send</button>
+</body>
+</html>
+<script>
+let already=true
+let room_id=123
+const sendInput = document.getElementById("sendInput");
+const sendBtn = document.getElementById("sendBtn");
+const place_message = document.getElementById("place_message");
+sendBtn.addEventListener("click", () => {
+    const value = sendInput.value.trim();
+    console.log("Recherche :", value);
+    let data={
+        room:room_id,
+        content:value
+    }
+    socket.emit("chat message", data); 
+});
+
+socket.on("chat message",(value)=>{
+    console.log(value)
+    createMessage(value)
+})
+function createMessage(text) {
+    const message = document.createElement("p");
+    message.textContent = text;
+
+    place_message.appendChild(message);
+}
+async function loadMessages() {
+    console.log('loadmessage')
+  const response = await fetch('/api/messages', {
+    credentials: 'include'
+  });
+
+  const messages = await response.json();
+
+  console.log(messages);
+
+}
+  loadMessages()
+</script>

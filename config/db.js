@@ -1,3 +1,4 @@
+// C:\Users\samyb\StudioProjects\web_S.E.M.W.A\config\db.js
 import pg from 'pg';
 import dotenv from 'dotenv';
 dotenv.config();

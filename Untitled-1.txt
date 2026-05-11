@@ -1,0 +1,25 @@
+Function quicksort(array):
+    if length(array) <= 1 then
+        return array
+    end if
+
+    pivot = array[length(array)-1]
+    final = 0
+
+    for i = 0 to length(array)-2 do
+        if array[i] < pivot then
+            temp = array[i]
+            array[i] = array[final]
+            array[final] = temp
+            final = final + 1
+        end if
+    end for
+
+    temp = array[final]
+    array[final] = pivot
+    array[length(array)-1] = temp
+
+    left = quicksort(array[0:final])
+    right = quicksort(array[final+1:])
+
+    return left + [array[final]] + right

@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { register, login, logout, registerAdminRequest, me } from '../controllers/authController.js';
 import { asyncWrap } from '../middlewares/asyncWrap.js';
-import { requireAuth } from '../middlewares/auth.js';
+import { requireAuth } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 

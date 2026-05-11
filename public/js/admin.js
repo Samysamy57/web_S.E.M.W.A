@@ -1,23 +1,46 @@
-// Logique complète du panneau d'administration S.E.M.W.A
+// C:\Users\samyb\StudioProjects\web_S.E.M.W.A\public\js\admin.js
 
 /* ══════════════════════════════
-   ÉTAT GLOBAL
+ÉTAT GLOBAL
 ══════════════════════════════ */
 let currentUser     = null;
 let refreshInterval = null;
+const socket        = io();
+// Écoute les messages entrants en temps réel
+socket.on('private message', (data) => {
+const body = document.getElementById('admin-msg-body');
+if (!body || body.style.display === 'none') return;
+const isOwn      = data.senderId === currentUser?.id;
+const color      = isOwn ? 'var(--blue)' : adminAvatarColor(data.senderId);
+const initials   = isOwn ? (currentUser.first_name?.[0] ?? 'M').toUpperCase() : '?';
+const time       = adminFormatTime(new Date().toISOString());
+const wrapClass   = isOwn ? 'bubble-wrap own' : 'bubble-wrap';
+const bubbleClass = isOwn ? 'bubble own'       : 'bubble other';
+const div = document.createElement('div');
+div.className = wrapClass;
+div.innerHTML = `
+  <div class="bubble-avatar" style="background:${color}">${initials}</div>
+  <div>
+    <div class="${bubbleClass}">${data.content}</div>
+    <div class="bubble-time ${isOwn ? '' : 'other'}">${time}</div>
+  </div>
+`;
+body.appendChild(div);
+body.scrollTop = body.scrollHeight;
+});
 
 /* ══════════════════════════════
    INITIALISATION
 ══════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
-  checkSession();
-
-  document.getElementById('filter-role').addEventListener('change', loadUsers);
-  document.getElementById('filter-sort').addEventListener('change', loadUsers);
-  document.getElementById('filter-search').addEventListener('input', () => {
-    clearTimeout(searchDebounce);
-    searchDebounce = setTimeout(loadUsers, 300);
-  });
+checkSession();
+initAdminSendBar(); // câble la barre d'envoi statique une seule fois
+document.getElementById('filter-role').addEventListener('change', loadUsers);
+document.getElementById('filter-sort').addEventListener('change', loadUsers);
+document.getElementById('filter-search').addEventListener('input', () => {
+clearTimeout(searchDebounce);
+searchDebounce = setTimeout(loadUsers, 300);
+});
 });
 
 async function checkSession() {
@@ -195,6 +218,8 @@ function showSection(name) {
   });
   document.getElementById(`section-${name}`).classList.remove('section-hidden');
   document.getElementById(`nav-${name}`).classList.add('active');
+
+  if (name === 'messages') loadAdminConversations();
 }
 
 /* ══════════════════════════════
@@ -263,10 +288,16 @@ function renderUsersTable(users, tbodyId, withActions) {
       ? `<span class="status-badge badge-active">Actif</span>`
       : `<span class="status-badge badge-inactive">Banni</span>`;
 
+    const name = `${u.first_name} ${u.last_name}`.replace(/'/g, "\\'");
     const actionBtn = withActions
-      ? u.is_active
-        ? `<button class="btn btn-ban"   onclick="toggleStatus('${u.id}', false)">Bannir</button>`
-        : `<button class="btn btn-unban" onclick="toggleStatus('${u.id}', true)">Réactiver</button>`
+      ? `<div style="display:flex;gap:8px;align-items:center;justify-content:flex-start;">
+           ${u.is_active
+             ? `<button class="btn btn-ban"   onclick="toggleStatus('${u.id}', false)">Bannir</button>`
+             : `<button class="btn btn-unban" onclick="toggleStatus('${u.id}', true)">Réactiver</button>`
+           }
+           <button class="btn" style="background:var(--blue-l);color:var(--blue);font-weight:700;padding:6px 12px;"
+             onclick="openDirectMessage('${u.id}', '${name}')">✉️ Support</button>
+         </div>`
       : '';
 
     return `<tr>
@@ -491,4 +522,285 @@ function toast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+/* ══════════════════════════════
+   BURGER MENU
+══════════════════════════════ */
+function toggleSidebar() {
+  const sidebar  = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  sidebar.classList.toggle('open');
+  backdrop.classList.toggle('open');
+}
+
+// Ferme la sidebar si on clique sur le backdrop
+document.addEventListener('DOMContentLoaded', () => {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sidebar-backdrop';
+  backdrop.id = 'sidebar-backdrop';
+  backdrop.addEventListener('click', toggleSidebar);
+  document.body.appendChild(backdrop);
+});
+
+/* ══════════════════════════════
+   MESSAGERIE ADMIN (lecture seule)
+══════════════════════════════ */
+let allAdminConvos = [];
+
+// Couleurs d'avatar déterministes
+const ADMIN_COLORS = ['#7C3AED','#0D9488','#D97706','#1B4FD8','#DC2626','#059669'];
+function adminAvatarColor(id = '') {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return ADMIN_COLORS[h % ADMIN_COLORS.length];
+}
+
+function adminFormatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const today = new Date();
+  if (d.toDateString() === today.toDateString())
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+}
+
+async function loadAdminConversations() {
+  const list = document.getElementById('admin-conversation-list');
+  list.innerHTML = '<p style="padding:16px;font-size:.8rem;color:var(--slate3)">Chargement…</p>';
+
+  try {
+    const res  = await fetch('/api/admin/messages/conversations', { credentials: 'include' });
+    const data = await res.json();
+    allAdminConvos = data.conversations ?? [];
+    renderAdminConvos(allAdminConvos);
+  } catch {
+    list.innerHTML = '<p style="padding:16px;font-size:.8rem;color:#DC2626">Erreur de chargement.</p>';
+  }
+}
+
+function renderAdminConvos(convos) {
+  const list = document.getElementById('admin-conversation-list');
+
+  if (!convos.length) {
+    list.innerHTML = '<p style="padding:16px;font-size:.8rem;color:var(--slate3)">Aucune conversation.</p>';
+    return;
+  }
+
+  list.innerHTML = convos.map(c => {
+    const name1   = `${c.user1_first_name} ${c.user1_last_name}`.trim() || c.user1_email;
+    const name2   = `${c.user2_first_name} ${c.user2_last_name}`.trim() || c.user2_email;
+    const label   = `${name1} — ${name2}`;
+    const init1   = (c.user1_first_name?.[0] ?? '?').toUpperCase();
+    const init2   = (c.user2_first_name?.[0] ?? '?').toUpperCase();
+    const color1  = adminAvatarColor(c.user1_id);
+    const color2  = adminAvatarColor(c.user2_id);
+    const preview = c.last_message ?? '';
+    const time    = adminFormatTime(c.last_message_at);
+
+    return `
+      <div class="msg-thread"
+           data-id="${c.conversation_id}"
+           data-user1-id="${c.user1_id}"
+           data-user1-name="${name1}"
+           data-user2-id="${c.user2_id}"
+           data-user2-name="${name2}"
+           data-color1="${color1}"
+           data-color2="${color2}"
+           data-init1="${init1}"
+           data-init2="${init2}"
+           onclick="selectAdminConvo(this)">
+        <!-- Double avatar pour montrer les 2 interlocuteurs -->
+        <div style="position:relative;width:40px;height:40px;flex-shrink:0">
+          <div style="position:absolute;top:0;left:0;width:28px;height:28px;border-radius:8px;background:${color1};color:#fff;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">${init1}</div>
+          <div style="position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:6px;background:${color2};color:#fff;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;border:2px solid #fff">${init2}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+            <div class="thread-name" style="font-size:.78rem">${label}</div>
+            <div class="thread-time">${time}</div>
+          </div>
+          <div class="thread-preview">${preview}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterAdminConvos(query) {
+  const q = query.toLowerCase();
+  const filtered = allAdminConvos.filter(c => {
+    const name1 = `${c.user1_first_name} ${c.user1_last_name} ${c.user1_email}`.toLowerCase();
+    const name2 = `${c.user2_first_name} ${c.user2_last_name} ${c.user2_email}`.toLowerCase();
+    return name1.includes(q) || name2.includes(q);
+  });
+  renderAdminConvos(filtered);
+}
+
+async function selectAdminConvo(el) {
+document.querySelectorAll('#admin-conversation-list .msg-thread')
+.forEach(t => t.classList.remove('active'));
+el.classList.add('active');
+const convoId   = el.dataset.id;
+const user1Id   = el.dataset.user1Id;
+const user1Name = el.dataset.user1Name;
+const user2Id   = el.dataset.user2Id;
+const user2Name = el.dataset.user2Name;
+const color1    = el.dataset.color1;
+const color2    = el.dataset.color2;
+const init1     = el.dataset.init1;
+const init2     = el.dataset.init2;
+document.getElementById('admin-chat-title').textContent = `${user1Name} — ${user2Name}`;
+document.getElementById('admin-chat-sub').textContent   = 'Conversation privée · modération';
+document.getElementById('admin-msg-header').style.display = 'flex';
+document.getElementById('admin-no-convo').style.display   = 'none';
+document.getElementById('admin-msg-body').style.display   = 'flex';
+// Rejoindre la room Socket.io de cette conversation
+socket.emit('join conversation', convoId);
+// L'admin fait-il partie de cette conversation ?
+const adminIsParticipant = (currentUser?.id === user1Id || currentUser?.id === user2Id);
+document.getElementById('admin-readonly-badge').style.display  = adminIsParticipant ? 'none'  : '';
+document.getElementById('admin-msg-input-row').style.display   = adminIsParticipant ? 'flex'  : 'none';
+// Stocke le receiverId pour l'envoi (l'autre participant)
+if (adminIsParticipant) {
+activeSupportConvoId  = convoId;
+activeSupportReceiver = (currentUser?.id === user1Id) ? user2Id : user1Id;
+}
+const body = document.getElementById('admin-msg-body');
+body.innerHTML = '<p style="color:var(--slate4);font-size:.8rem">Chargement…</p>';
+try {
+const res      = await fetch(`/api/admin/messages/conversation/${convoId}`, { credentials: 'include' });
+const data     = await res.json();
+const messages = data.messages ?? [];
+if (!messages.length) {
+  body.innerHTML = '<p style="color:var(--slate4);font-size:.8rem">Aucun message.</p>';
+  return;
+}
+
+body.innerHTML = messages.map(msg => {
+  // Si l'expéditeur est l'admin connecté → bulle à droite
+  const isOwn    = msg.sender_id === currentUser?.id;
+  const isUser1  = msg.sender_id === user1Id;
+  const name     = isUser1 ? user1Name : user2Name;
+  const color    = isUser1 ? color1    : color2;
+  const initials = isUser1 ? init1     : init2;
+  const time     = adminFormatTime(msg.created_at);
+
+  const wrapClass   = isOwn ? 'bubble-wrap own' : 'bubble-wrap';
+  const bubbleClass = isOwn ? 'bubble own'       : 'bubble other';
+
+  return `
+    <div class="${wrapClass}">
+      <div class="bubble-avatar" style="background:${color}">${initials}</div>
+      <div>
+        <div style="font-size:.68rem;color:var(--slate4);margin-bottom:3px;${isOwn ? 'text-align:right' : ''}">${name}</div>
+        <div class="${bubbleClass}">${msg.content}</div>
+        <div class="bubble-time ${isOwn ? '' : 'other'}">${time}</div>
+      </div>
+    </div>
+  `;
+}).join('');
+
+body.scrollTop = body.scrollHeight;
+} catch {
+body.innerHTML = '<p style="color:#DC2626;font-size:.8rem">Erreur de chargement des messages.</p>';
+}
+}
+
+/* ══════════════════════════════
+   SUPPORT HELPDESK (Admin → User)
+══════════════════════════════ */
+// Stocke la conversation support active pour pouvoir envoyer des messages
+let activeSupportConvoId  = null;
+let activeSupportReceiver = null; // userId du user concerné
+
+async function openDirectMessage(userId, userName) {
+try {
+const res  = await fetch(`/api/admin/messages/support/${userId}`, {
+method: 'POST',
+credentials: 'include',
+});
+const data = await res.json();
+if (!res.ok) { toast('Erreur ouverture conversation support.'); return; }
+activeSupportConvoId  = data.conversationId;
+activeSupportReceiver = userId;
+
+showSection('messages');
+
+document.getElementById('admin-chat-title').textContent = `Support — ${userName}`;
+document.getElementById('admin-chat-sub').textContent   = 'Ticket de support';
+// Admin est participant → on cache le badge, on affiche l'input
+document.getElementById('admin-readonly-badge').style.display = 'none';
+document.getElementById('admin-msg-input-row').style.display  = 'flex';
+document.getElementById('admin-msg-header').style.display     = 'flex';
+document.getElementById('admin-no-convo').style.display       = 'none';
+document.getElementById('admin-msg-body').style.display       = 'flex';
+
+// Rejoindre la room Socket.io
+socket.emit('join conversation', data.conversationId);
+
+await loadSupportMessages(data.conversationId);
+} catch {
+toast('Erreur réseau.');
+}
+}
+
+async function loadSupportMessages(conversationId) {
+const body = document.getElementById('admin-msg-body');
+body.innerHTML = '';
+try {
+const res      = await fetch(`/api/admin/messages/conversation/${conversationId}`, { credentials: 'include' });
+const data     = await res.json();
+const messages = data.messages ?? [];
+if (!messages.length) {
+  body.innerHTML = '<p style="color:var(--slate4);font-size:.8rem">Aucun message pour l\'instant.</p>';
+  return;
+}
+
+body.innerHTML = messages.map(msg => {
+  // Même logique que partout : sender_id === admin → bulle à droite
+  const isOwn    = msg.sender_id === currentUser?.id;
+  const name     = isOwn ? 'Moi' : `${msg.first_name} (${msg.role})`;
+  const color    = isOwn ? 'var(--blue)' : adminAvatarColor(msg.sender_id);
+  const initials = isOwn ? (currentUser.first_name?.[0] ?? 'M').toUpperCase() : (msg.first_name?.[0] ?? '?').toUpperCase();
+  const time     = adminFormatTime(msg.created_at);
+
+  const wrapClass   = isOwn ? 'bubble-wrap own' : 'bubble-wrap';
+  const bubbleClass = isOwn ? 'bubble own'       : 'bubble other';
+
+  return `
+    <div class="${wrapClass}">
+      <div class="bubble-avatar" style="background:${color}">${initials}</div>
+      <div>
+        <div style="font-size:.68rem;color:var(--slate4);margin-bottom:3px;${isOwn ? 'text-align:right' : ''}">${name}</div>
+        <div class="${bubbleClass}">${msg.content}</div>
+        <div class="bubble-time ${isOwn ? '' : 'other'}">${time}</div>
+      </div>
+    </div>
+  `;
+}).join('');
+
+body.scrollTop = body.scrollHeight;
+} catch {
+body.innerHTML = '<p style="color:#DC2626;font-size:.8rem">Erreur chargement.</p>';
+}
+}
+// Câblage unique de la barre d'envoi (appelé une seule fois au DOMContentLoaded)
+function initAdminSendBar() {
+const input = document.getElementById('admin-msg-input');
+const btn   = document.getElementById('admin-send-btn');
+const send = () => {
+const content = input.value.trim();
+if (!content || !activeSupportReceiver) return;
+// Émission Socket.io — même mécanique que conversations.js
+socket.emit('private message', {
+  senderId:   currentUser.id,
+  receiverId: activeSupportReceiver,
+  content,
+});
+
+input.value = '';
+};
+btn.addEventListener('click', send);
+input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 }
