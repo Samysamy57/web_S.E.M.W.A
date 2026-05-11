@@ -68,6 +68,9 @@ app.get('/acceuil', requireAuth, (_req, res) => {
 app.get('/dashboard', requireAuth, (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'views', 'dashboard.html'));
 });
+app.get('/create-event', requireAuth, (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'create_event.html'));
+});
 
 // 404
 app.use((_req, res) => {

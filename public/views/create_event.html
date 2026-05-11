@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S.E.M.W.A — Create Event</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --blue:#1B4FD8;--blue-l:#EEF3FF;--blue-m:#C3D2FF;
+      --teal:#0D9488;--teal-l:#F0FDFA;
+      --amber:#D97706;--amber-l:#FFFBEB;
+      --red:#DC2626;--red-l:#FEF2F2;
+      --green:#16A34A;--green-l:#DCFCE7;
+      --slate:#1E293B;--slate2:#334155;--slate3:#64748B;--slate4:#94A3B8;
+      --border:#E2E8F0;--bg:#F8FAFC;--white:#fff;
+      --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+    }
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--slate);min-height:100vh}
+
+    /* NAV */
+    .nav-bar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:12px 28px;gap:16px;}
+    .nav-brand{font-family:'Fraunces',serif;font-size:1.2rem;color:var(--blue);letter-spacing:-.02em;cursor:pointer;text-decoration:none;}
+    .nav-user{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--slate3)}
+    .user-avatar{width:34px;height:34px;border-radius:9px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;color:#fff}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:28px;right:28px;z-index:999;background:var(--slate);color:#fff;padding:14px 20px;border-radius:12px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.12);transform:translateY(80px);opacity:0;transition:.3s cubic-bezier(.34,1.56,.64,1);}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast-icon{width:20px;height:20px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+
+    /* FORMS */
+    label{display:block;font-size:.8rem;font-weight:600;color:var(--slate2);margin-bottom:6px;letter-spacing:.02em}
+    input[type=text],input[type=url],input[type=date],input[type=number],input[type=time],select,textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;color:var(--slate);outline:none;transition:.2s;background:var(--bg);}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(27,79,216,.1)}
+    textarea{resize:vertical;min-height:90px}
+    .form-group{margin-bottom:16px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+    /* BUTTONS */
+    .btn-primary{padding:12px 28px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:.92rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s;}
+    .btn-primary:hover{background:#1844c0}
+    .btn-ghost{padding:11px 22px;background:#fff;color:var(--slate2);border:1.5px solid var(--border);border-radius:9px;font-size:.88rem;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s;}
+    .btn-ghost:hover{border-color:var(--slate3)}
+
+    /* LAYOUT */
+    .create-wrap{max-width:780px;margin:0 auto;padding:28px 24px}
+    .back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--slate3);font-size:.82rem;font-weight:600;cursor:pointer;margin-bottom:20px;border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;transition:.15s;text-decoration:none;}
+    .back-btn:hover{color:var(--blue)}
+
+    /* STEPS */
+    .create-steps{display:flex;align-items:center;margin-bottom:32px}
+    .step-item{display:flex;align-items:center;gap:8px;flex:1}
+    .step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;border:2px solid var(--border);color:var(--slate3);background:#fff;cursor:pointer;transition:.2s;}
+    .step-circle.active{background:var(--blue);border-color:var(--blue);color:#fff}
+    .step-circle.done{background:var(--green);border-color:var(--green);color:#fff}
+    .step-label{font-size:.78rem;font-weight:600;color:var(--slate3)}
+    .step-label.active{color:var(--blue)}
+    .step-label.done{color:var(--green)}
+    .step-line{flex:1;height:2px;background:var(--border);margin:0 6px}
+    .step-line.done{background:var(--green)}
+
+    /* CARDS */
+    .create-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:18px}
+    .create-card h2{font-size:1rem;font-weight:700;margin-bottom:18px;color:var(--slate)}
+    .create-footer{display:flex;justify-content:space-between;align-items:center;padding-top:8px}
+
+    /* IMAGE UPLOAD ZONE */
+    .img-upload{border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px}
+    .img-upload:hover{border-color:var(--blue);background:var(--blue-l)}
+    .img-upload-icon{font-size:2rem;margin-bottom:8px}
+    .img-upload p{font-size:.82rem;color:var(--slate3);margin-bottom:4px}
+    .img-upload span{font-size:.75rem;color:var(--blue);font-weight:600}
+
+    /* TICKET BUILDER */
+    .ticket-builder{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px}
+    .ticket-builder-row{display:grid;grid-template-columns:1fr 1fr 100px 40px;align-items:center}
+    .tb-cell{padding:10px 12px;border-right:1px solid var(--border);font-size:.82rem}
+    .tb-cell:last-child{border-right:none}
+    .tb-cell input{border:none;background:none;padding:0;font-size:.82rem;width:100%;font-family:'Plus Jakarta Sans',sans-serif;outline:none;color:var(--slate)}
+    .tb-header{background:var(--bg);font-weight:700;font-size:.75rem;color:var(--slate3);letter-spacing:.04em;text-transform:uppercase}
+    .tb-del{width:28px;height:28px;border:none;background:var(--red-l);color:var(--red);border-radius:6px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;margin:auto;}
+    .add-ticket-btn{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;color:var(--blue);border:none;background:none;cursor:pointer;padding:8px 0;font-family:'Plus Jakarta Sans',sans-serif;}
+
+    /* PREVIEW BOX */
+    .preview-box{background:var(--bg);border-radius:12px;padding:18px;margin-bottom:24px;border:1px solid var(--border)}
+    .preview-box .preview-title{font-weight:700;font-size:.95rem;margin-bottom:8px}
+    .preview-box .preview-meta{font-size:.8rem;color:var(--slate3);display:flex;flex-direction:column;gap:4px}
+
+    /* ERROR */
+    .error-msg{background:var(--red-l);color:var(--red);border-radius:8px;padding:10px 14px;font-size:.82rem;font-weight:600;margin-bottom:12px;display:none}
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon">✓</div>
+  <span id="toast-msg">Action completed</span>
+</div>
+
+<!-- NAV -->
+<nav class="nav-bar">
+  <a class="nav-brand" href="/dashboard">S.E.M.W.A</a>
+  <div class="nav-user">
+    <span id="nav-username">Loading...</span>
+    <div class="user-avatar" id="nav-avatar">?</div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="create-wrap">
+  <a class="back-btn" href="/dashboard">← Back to dashboard</a>
+
+  <div style="margin-bottom:24px">
+    <h1 style="font-family:'Fraunces',serif;font-size:1.7rem">Create new event</h1>
+    <p style="color:var(--slate3);font-size:.85rem;margin-top:2px">Fill in the details below to publish your event</p>
+  </div>
+
+  <!-- STEP INDICATOR -->
+  <div class="create-steps">
+    <div class="step-item">
+      <div class="step-circle active" id="step-1" onclick="goStep(1)">1</div>
+      <div class="step-label active" id="slabel-1">Basics</div>
+    </div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step-item">
+      <div class="step-circle" id="step-2" onclick="goStep(2)">2</div>
+      <div class="step-label" id="slabel-2">Details</div>
+    </div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step-item">
+      <div class="step-circle" id="step-3" onclick="goStep(3)">3</div>
+      <div class="step-label" id="slabel-3">Tickets</div>
+    </div>
+    <div class="step-line" id="line-3"></div>
+    <div class="step-item">
+      <div class="step-circle" id="step-4" onclick="goStep(4)">4</div>
+      <div class="step-label" id="slabel-4">Preview</div>
+    </div>
+  </div>
+
+  <!-- STEP 1 — Basics -->
+  <div id="create-step-1">
+    <div class="create-card">
+      <h2>Basic information</h2>
+      <div class="form-group">
+        <label>EVENT TITLE</label>
+        <input type="text" id="title" placeholder="e.g. Advanced React Workshop">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>CATEGORY</label>
+          <select id="category">
+            <option value="tech">Tech</option>
+            <option value="conferences">Conferences</option>
+            <option value="arts">Arts</option>
+            <option value="music">Music</option>
+            <option value="workshops">Workshops</option>
+            <option value="sports">Sports</option>
+            <option value="food">Food</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>FORMAT</label>
+          <select id="format">
+            <option value="in-person">In-person</option>
+            <option value="online">Online</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>DESCRIPTION</label>
+        <textarea id="description" placeholder="Describe your event…"></textarea>
+      </div>
+    </div>
+
+    <div class="create-card">
+      <h2>Cover image <span style="font-size:.75rem;color:var(--slate4);font-weight:400">(optional)</span></h2>
+      <!-- Zone visuelle décorative (pas de vrai upload) -->
+      <div class="img-upload" onclick="document.getElementById('cover_image_url').focus()">
+        <div class="img-upload-icon">🖼</div>
+        <p>Paste an image URL below</p>
+        <span>JPG, PNG — hosted image link</span>
+      </div>
+      <div class="form-group">
+        <label>IMAGE URL</label>
+        <input type="url" id="cover_image_url" placeholder="https://example.com/image.jpg">
+      </div>
+    </div>
+
+    <div class="create-footer">
+      <span></span>
+      <button class="btn-primary" onclick="goStep(2)">Next — Details →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 — Details -->
+  <div id="create-step-2" style="display:none">
+    <div class="create-card">
+      <h2>Date & location</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>START DATE</label>
+          <input type="date" id="start_date">
+        </div>
+        <div class="form-group">
+          <label>END DATE <span style="font-weight:400;color:var(--slate4)">(optional)</span></label>
+          <input type="date" id="end_date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>START TIME</label>
+          <input type="time" id="start_time" value="09:00">
+        </div>
+        <div class="form-group">
+          <label>END TIME</label>
+          <input type="time" id="end_time" value="17:00">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>VENUE / ADDRESS</label>
+          <input type="text" id="location" placeholder="ISEP Paris, 28 rue Notre-Dame-des-Champs…">
+        </div>
+        <div class="form-group">
+          <label>MAX CAPACITY</label>
+          <input type="number" id="capacity" placeholder="50" min="1">
+        </div>
+      </div>
+    </div>
+    <div class="create-footer">
+      <button class="btn-ghost" onclick="goStep(1)">← Back</button>
+      <button class="btn-primary" onclick="goStep(3)">Next — Tickets →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 — Tickets -->
+  <div id="create-step-3" style="display:none">
+    <div class="create-card">
+      <h2>Ticket types</h2>
+      <div class="ticket-builder" id="ticket-builder">
+        <!-- En-tête du tableau -->
+        <div class="ticket-builder-row tb-header">
+          <div class="tb-cell">Name</div>
+          <div class="tb-cell">Description</div>
+          <div class="tb-cell">Price (€)</div>
+          <div class="tb-cell"></div>
+        </div>
+        <!-- Ligne par défaut -->
+        <div class="ticket-builder-row">
+          <div class="tb-cell"><input type="text" placeholder="Standard" class="t-name"></div>
+          <div class="tb-cell"><input type="text" placeholder="Full day access" class="t-desc"></div>
+          <div class="tb-cell"><input type="number" placeholder="0" min="0" class="t-price"></div>
+          <div class="tb-cell"><button class="tb-del" onclick="deleteTicketRow(this)">✕</button></div>
+        </div>
+      </div>
+      <button class="add-ticket-btn" id="add-ticket-btn">+ Add ticket type</button>
+    </div>
+    <div class="create-footer">
+      <button class="btn-ghost" onclick="goStep(2)">← Back</button>
+      <button class="btn-primary" onclick="goStep(4)">Next — Preview →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 — Preview & Publish -->
+  <div id="create-step-4" style="display:none">
+    <div class="create-card" style="text-align:center;padding:40px">
+      <div style="font-size:3rem;margin-bottom:16px">🎉</div>
+      <h2 style="font-family:'Fraunces',serif;font-size:1.5rem;margin-bottom:8px">Looking great!</h2>
+      <p style="color:var(--slate3);font-size:.88rem;margin-bottom:28px">Review your event before publishing. It will be saved as a <strong>draft</strong> — you can edit it anytime from your dashboard.</p>
+
+      <div class="error-msg" id="publish-error"></div>
+
+      <!-- Résumé dynamique rempli par JS -->
+      <div class="preview-box" id="preview-box">
+        <div class="preview-title" id="preview-title">—</div>
+        <div class="preview-meta" id="preview-meta"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn-ghost" onclick="goStep(3)">← Edit</button>
+        <button class="btn-primary" id="publish-btn">🚀 Publish event</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .create-wrap -->
+
+<script src="/js/create_event.js"></script>
+</body>
+</html>

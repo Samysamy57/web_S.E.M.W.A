@@ -102,6 +102,51 @@ async bookEvent(eventId, userId) {
 },
 
   // Récupère tous les événements avec le nom du créateur
+  // Crée un événement + ses types de tickets en une transaction atomique
+  async createEventWithTickets(eventData, tickets = []) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Insertion de l'événement (statut forcé à 'draft')
+      const { rows: [event] } = await client.query(
+        `INSERT INTO events
+           (title, description, category, cover_image_url, start_date, end_date,
+            location, max_participants, status, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'draft',$9)
+         RETURNING *`,
+        [
+          eventData.title,
+          eventData.description,
+          eventData.category,
+          eventData.cover_image_url || null,
+          eventData.start_date,
+          eventData.end_date || null,
+          eventData.location || null,
+          eventData.capacity || null,
+          eventData.created_by,
+        ]
+      );
+
+      // Insertion des types de tickets
+      for (const ticket of tickets) {
+        await client.query(
+          `INSERT INTO event_ticket_types (event_id, name, description, price)
+           VALUES ($1, $2, $3, $4)`,
+          [event.id, ticket.name, ticket.description || null, ticket.price]
+        );
+      }
+
+      await client.query('COMMIT');
+      return event;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  },
+
   async getAllForAdmin() {
     const { rows } = await pool.query(
       `
