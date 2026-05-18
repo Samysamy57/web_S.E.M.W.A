@@ -1,0 +1,58 @@
+/* Fichier : public/css/event_detail.css */
+/* NAV */
+.nav-bar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:12px 28px;gap:16px}
+.nav-brand{font-family:'Fraunces',serif;font-size:1.2rem;color:var(--blue);letter-spacing:-.02em}
+.nav-brand span{font-style:italic;color:var(--slate3);font-size:.8rem;margin-left:8px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400}
+.btn-ghost-sm{padding:8px 16px;background:#fff;color:var(--slate2);border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s}
+.btn-ghost-sm:hover{border-color:var(--slate3)}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;z-index:999;background:var(--slate);color:#fff;padding:14px 20px;border-radius:12px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg,0 8px 32px rgba(0,0,0,.12));transform:translateY(80px);opacity:0;transition:.3s cubic-bezier(.34,1.56,.64,1)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-icon{width:20px;height:20px;border-radius:50%;background:var(--green,#16A34A);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+.toast-icon.error{background:var(--red,#DC2626)}
+
+.detail-wrap{max-width:1100px;margin:0 auto;padding:28px 24px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--slate3);font-size:.82rem;font-weight:600;cursor:pointer;margin-bottom:20px;border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;transition:.15s;}
+.back-btn:hover{color:var(--blue)}
+.detail-grid{display:grid;grid-template-columns:1fr 340px;gap:24px}
+.detail-banner{height:220px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:5rem;margin-bottom:20px;position:relative;overflow:hidden;}
+.detail-cats{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.detail-title{font-family:'Fraunces',serif;font-size:2rem;line-height:1.15;margin-bottom:12px}
+.detail-meta-row{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:20px}
+.detail-meta-item{display:flex;align-items:center;gap:7px;font-size:.85rem;color:var(--slate3)}
+.detail-meta-item strong{color:var(--slate);font-weight:600}
+.detail-section{margin-bottom:24px}
+.detail-section h3{font-size:.95rem;font-weight:700;margin-bottom:10px;color:var(--slate)}
+.detail-section p{font-size:.88rem;color:var(--slate3);line-height:1.7}
+.ticket-types{display:flex;flex-direction:column;gap:10px}
+.ticket-type{border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:.2s;}
+.ticket-type:hover{border-color:var(--blue);background:var(--blue-l)}
+.ticket-type.selected{border-color:var(--blue);background:var(--blue-l)}
+.ticket-name{font-weight:700;font-size:.88rem}
+.ticket-desc{font-size:.76rem;color:var(--slate3);margin-top:2px}
+.ticket-price{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:700;color:var(--blue)}
+.sticky-card{position:sticky;top:73px}
+.price-box{background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:14px}
+.price-from{font-size:.78rem;color:var(--slate3);margin-bottom:4px}
+.price-main{font-family:'Fraunces',serif;font-size:2.2rem;font-weight:700;color:var(--blue);margin-bottom:2px}
+.price-note{font-size:.75rem;color:var(--slate4);margin-bottom:18px}
+.capacity-bar{height:6px;background:var(--border);border-radius:3px;margin-bottom:6px;overflow:hidden}
+.capacity-fill{height:100%;border-radius:3px;background:var(--amber)}
+.capacity-note{font-size:.75rem;color:var(--amber);font-weight:600;margin-bottom:18px}
+.organizer-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;transition:.2s}
+.organizer-card:hover{box-shadow:var(--shadow)}
+.org-avatar{width:44px;height:44px;border-radius:12px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem;flex-shrink:0;overflow:hidden}
+.org-avatar img{width:100%;height:100%;object-fit:cover}
+.org-name{font-weight:700;font-size:.88rem}
+.org-meta{font-size:.75rem;color:var(--slate3);margin-top:2px}
+.map-placeholder{height:140px;background:linear-gradient(135deg,#e0f2fe,#bbf7d0);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--slate3);margin-bottom:10px;cursor:pointer;transition:.2s;border:1px solid var(--border);}
+.map-placeholder:hover{box-shadow:var(--shadow)}
+@media(max-width:768px){.detail-grid{grid-template-columns:1fr}}
+
+/* Boutons manquants */
+.btn-ghost{width:100%;padding:12px;background:#fff;color:var(--slate2);border:1.5px solid var(--border);border-radius:9px;font-size:.88rem;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s;}
+.btn-ghost:hover{border-color:var(--slate3);background:var(--bg)}
+.btn-secondary{padding:9px 20px;background:var(--blue-l);color:var(--blue);border:none;border-radius:8px;font-size:.82rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s;}
+.btn-secondary:hover{background:var(--blue-m)}
+.btn-danger{padding:9px 20px;background:var(--red-l);color:var(--red);border:none;border-radius:8px;font-size:.82rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;}

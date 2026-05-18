@@ -11,4 +11,10 @@ router.use(requireAuth, requireRole('organizer', 'admin'));
 router.get('/stats',  dashboardController.getStats);
 router.get('/events', dashboardController.getEvents);
 
+// Participants d'un event spécifique (avec stats pour Chart.js)
+router.get('/events/:id/attendees', dashboardController.getEventAttendees);
+
+// Annulation d'un event
+router.patch('/events/:id/cancel',  dashboardController.cancelEvent);
+
 export default router;

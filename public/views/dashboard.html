@@ -6,8 +6,9 @@
   <title>S.E.M.W.A — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/conversation.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    /* Variables reprises du mockup */
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
       --blue:#1B4FD8;--blue-l:#EEF3FF;--blue-m:#C3D2FF;
@@ -20,28 +21,35 @@
       --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
       --shadow-lg:0 8px 32px rgba(0,0,0,.12);
     }
-    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--slate);min-height:100vh}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--slate);height:100vh;overflow:hidden}
 
-    /* Layout dashboard */
-    .dash-layout{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+    /* Layout */
+    .dash-layout{display:grid;grid-template-columns:210px 1fr;height:100vh;overflow:hidden}
 
     /* Sidebar */
-    .sidebar{background:var(--slate);color:#fff;padding:20px 0;display:flex;flex-direction:column;}
+    .sidebar{background:var(--slate);color:#fff;padding:20px 0 0 0;display:flex;flex-direction:column;height:100vh}
     .sidebar-section{padding:0 14px;margin-bottom:6px}
+
+    /* Zone de navigation scrollable */
+    .sidebar-nav{flex:1;overflow-y:auto;padding-bottom:20px}
+    .sidebar-nav::-webkit-scrollbar{width:5px}
+    .sidebar-nav::-webkit-scrollbar-track{background:transparent}
+    .sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:10px}
     .sidebar-label{font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 10px;margin-bottom:5px;}
-    .sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:.8rem;font-weight:500;color:rgba(255,255,255,.65);cursor:pointer;transition:.15s;margin-bottom:2px;text-decoration:none;}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:.8rem;font-weight:500;color:rgba(255,255,255,.65);cursor:pointer;transition:.15s;margin-bottom:2px;text-decoration:none;border:none;background:none;width:100%;text-align:left;font-family:'Plus Jakarta Sans',sans-serif;}
     .sb-item:hover{background:rgba(255,255,255,.1);color:#fff}
     .sb-item.active{background:var(--blue);color:#fff}
     .sb-icon{width:17px;text-align:center;font-size:.92rem;flex-shrink:0}
     .sb-count{margin-left:auto;background:rgba(255,255,255,.15);border-radius:99px;font-size:.63rem;padding:2px 7px;font-weight:700}
     .sb-count.alert{background:#EF4444;color:#fff}
-    .sidebar-footer{margin-top:auto;padding:14px;border-top:1px solid rgba(255,255,255,.1)}
+    /* Footer ancré en bas, jamais caché */
+    .sidebar-footer{flex-shrink:0;margin-top:0;padding:14px;border-top:1px solid rgba(255,255,255,.1);background:var(--slate)}
     .user-avatar{width:34px;height:34px;border-radius:9px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;flex-shrink:0;}
     .user-name{font-size:.8rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .user-role{font-size:.68rem;color:rgba(255,255,255,.5)}
 
     /* Main */
-    .dash-main{background:var(--bg);padding:24px 28px;overflow-y:auto}
+    .dash-main{background:var(--bg);padding:24px 28px;overflow-y:auto;height:100vh}
     .dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
     .dash-header h1{font-family:'Fraunces',serif;font-size:1.6rem}
     .dash-header p{color:var(--slate3);font-size:.83rem;margin-top:2px}
@@ -65,18 +73,59 @@
     .card-title a{font-size:.75rem;color:var(--blue);font-weight:500;text-decoration:none;cursor:pointer}
 
     /* Event rows */
-    .event-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;border-radius:6px;}
-    .event-row:hover{background:var(--bg);padding-left:6px}
+    .event-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);transition:.15s;border-radius:6px;}
     .event-row:last-child{border-bottom:none;padding-bottom:0}
     .event-thumb{width:42px;height:42px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
     .event-row-info{flex:1;min-width:0}
     .event-row-info h4{font-size:.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .event-row-info span{font-size:.72rem;color:var(--slate3)}
     .sold{font-size:.8rem;font-weight:700;color:var(--slate)}
-    .cap{font-size:.68rem;color:var(--slate4)}
     .progress-bar{height:4px;background:var(--border);border-radius:2px;margin-top:3px;width:68px}
     .progress-fill{height:100%;border-radius:2px;background:var(--blue)}
     .status-badge{display:inline-flex;padding:3px 9px;border-radius:99px;font-size:.67rem;font-weight:700;letter-spacing:.03em;}
+
+    /* Boutons d'action */
+    .event-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
+    .btn-primary{padding:7px 12px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:.74rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s;}
+    .btn-primary:hover{background:#1844c0}
+    .btn-secondary{padding:7px 12px;background:var(--blue-l);color:var(--blue);border:none;border-radius:7px;font-size:.74rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s;}
+    .btn-secondary:hover{background:var(--blue-m)}
+    .btn-danger{padding:7px 12px;background:var(--red-l);color:var(--red);border:none;border-radius:7px;font-size:.74rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;}
+    .btn-ghost{padding:12px;background:#fff;color:var(--slate2);border:1.5px solid var(--border);border-radius:9px;font-size:.88rem;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s;flex:1}
+    .btn-ghost:hover{border-color:var(--slate3);background:var(--bg)}
+
+    /* Sections SPA */
+    .dash-section{} /* visible par défaut */
+    .section-hidden{display:none !important}
+
+    /* Section messages : pleine hauteur, sans padding du dash-main */
+    .section-messages-full{
+      margin:-24px -28px;   /* annule le padding du .dash-main */
+      height:calc(100vh);
+      overflow:hidden;
+    }
+    /* On réutilise le layout de conversation.css à l'intérieur */
+    .section-messages-full .messages-layout{
+      height:100%;
+    }
+
+    /* Bouton retour */
+    .back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--slate3);font-size:.82rem;font-weight:600;cursor:pointer;margin-bottom:20px;border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;transition:.15s;padding:0}
+    .back-btn:hover{color:var(--blue)}
+
+    /* Tableau participants */
+    .attendees-table{width:100%;border-collapse:collapse;font-size:.82rem}
+    .attendees-table th{text-align:left;padding:10px 12px;font-size:.72rem;font-weight:700;color:var(--slate3);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--border);background:var(--bg)}
+    .attendees-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--slate2)}
+    .attendees-table tr:last-child td{border-bottom:none}
+    .attendees-table tr:hover td{background:var(--bg)}
+
+    /* Graphique CSS bars */
+    .chart-bars{display:flex;align-items:flex-end;gap:6px;height:76px;padding-top:8px}
+    .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+    .bar{border-radius:4px 4px 0 0;width:100%;transition:.3s}
+    .bar-lbl{font-size:.64rem;color:var(--slate4)}
+    .chart-canvas-wrap{position:relative;height:120px;margin-bottom:4px}
 
     /* Notifs */
     .notif-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;}
@@ -86,23 +135,61 @@
     .notif-item p{font-size:.78rem;color:var(--slate2);line-height:1.4}
     .notif-item time{font-size:.7rem;color:var(--slate4);display:block;margin-top:2px}
 
-    /* Chart */
-    .chart-bars{display:flex;align-items:flex-end;gap:6px;height:76px;padding-top:8px}
-    .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
-    .bar{border-radius:4px 4px 0 0;width:100%;transition:.3s}
-    .bar-lbl{font-size:.64rem;color:var(--slate4)}
-
-    /* Skeleton loader */
+    /* Skeleton */
     .skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;display:inline-block;}
     @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+    .modal-overlay.open{display:flex}
+    .modal{background:#fff;border-radius:20px;padding:32px;width:100%;max-width:520px;position:relative;box-shadow:var(--shadow-lg);}
+    .modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border:none;background:var(--bg);border-radius:8px;cursor:pointer;font-size:1rem;color:var(--slate3);display:flex;align-items:center;justify-content:center;}
+    .modal-close:hover{background:var(--border);color:var(--slate)}
+    .modal h2{font-family:'Fraunces',serif;font-size:1.5rem;margin-bottom:6px}
+    .modal p{color:var(--slate3);font-size:.88rem;margin-bottom:24px}
+
+    /* Toast */
+    .toast{position:fixed;bottom:28px;right:28px;z-index:999;background:var(--slate);color:#fff;padding:14px 20px;border-radius:12px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);transform:translateY(80px);opacity:0;transition:.3s cubic-bezier(.34,1.56,.64,1);}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast-icon{width:20px;height:20px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+
+    /* Section "En construction" */
+    .wip-section{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;color:var(--slate3)}
+    .wip-section .wip-icon{font-size:3.5rem}
+    .wip-section h2{font-family:'Fraunces',serif;font-size:1.5rem;color:var(--slate2)}
+    .wip-section p{font-size:.88rem;max-width:320px;text-align:center;line-height:1.6}
   </style>
 </head>
 <body>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-icon">✓</div>
+  <span id="toast-msg">Action completed</span>
+</div>
+
+<!-- Modal : Annuler un événement -->
+<div class="modal-overlay" id="modal-cancel">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-cancel')">✕</button>
+    <h2>Cancel this event?</h2>
+    <p>All registered attendees will be notified automatically via email. This action cannot be undone.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn-ghost" onclick="closeModal('modal-cancel')">Keep event</button>
+      <button style="flex:1;padding:12px;background:var(--red);color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif"
+              id="btn-confirm-cancel">
+        Yes, cancel event
+      </button>
+    </div>
+  </div>
+</div>
 
 <div class="dash-layout">
 
   <!-- ─── SIDEBAR ─── -->
   <aside class="sidebar">
+
+    <!-- Logo : ancré en haut, hors du scroll -->
     <div class="sidebar-section" style="margin-bottom:18px">
       <div style="display:flex;align-items:center;gap:10px;padding:0 10px;margin-bottom:18px">
         <div style="width:30px;height:30px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:#fff">S</div>
@@ -110,36 +197,43 @@
       </div>
     </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-label">Main</div>
-      <a class="sb-item active" href="/dashboard">📊 <span>Dashboard</span></a>
-      <a class="sb-item" href="#">🗓 <span>My Events</span><span class="sb-count" id="sb-events-count">–</span></a>
-      <a class="sb-item" href="#">🎫 <span>Tickets</span></a>
-      <a class="sb-item" href="#">👥 <span>Attendees</span></a>
-    </div>
+    <!-- Navigation : seule zone qui défile si trop de liens -->
+    <!-- Navigation : seule zone qui défile si trop de liens -->
+    <div class="sidebar-nav">
 
-    <div class="sidebar-section" style="margin-top:14px">
-      <div class="sidebar-label">Communication</div>
-      <a class="sb-item" href="/conversation">✉️ <span>Messages</span></a>
-      <a class="sb-item" href="#">🔔 <span>Notifications</span></a>
-    </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Main</div>
+        <div class="sb-item active" onclick="showSection('section-dashboard')">📊 <span>Dashboard</span></div>
+        <div class="sb-item" onclick="showSection('section-my-events')">🗓 <span>My Events</span><span class="sb-count" id="sb-events-count">–</span></div>
+        <div class="sb-item" onclick="showSection('section-tickets')">🎫 <span>Tickets</span></div>
+        <div class="sb-item" onclick="showSection('section-attendees-wip')">👥 <span>Attendees</span></div>
+      </div>
 
-    <div class="sidebar-section" style="margin-top:14px">
-      <div class="sidebar-label">Analytics</div>
-      <a class="sb-item" href="#">📈 <span>Reports</span></a>
-      <a class="sb-item" href="#">💳 <span>Revenue</span></a>
-    </div>
+      <div class="sidebar-section" style="margin-top:14px">
+        <div class="sidebar-label">Communication</div>
+        <div class="sb-item" onclick="showSection('section-messages')">✉️ <span>Messages</span></div>
+        <div class="sb-item" onclick="showSection('section-notifications')">🔔 <span>Notifications</span></div>
+      </div>
 
-    <div class="sidebar-section" style="margin-top:14px">
+      <div class="sidebar-section" style="margin-top:14px">
+        <div class="sidebar-label">Analytics</div>
+        <div class="sb-item" onclick="showSection('section-reports')">📈 <span>Reports</span></div>
+        <div class="sb-item" onclick="showSection('section-revenue')">💳 <span>Revenue</span></div>
+      </div>
+
+    </div><!-- /sidebar-nav -->
+
+    <!-- Settings : statique, ancré au-dessus du footer, jamais masqué -->
+    <div class="sidebar-section" style="padding:14px 14px 10px">
       <div class="sidebar-label">Settings</div>
-      <a class="sb-item" href="#">👤 <span>My profile</span></a>
-      <a class="sb-item" href="#">⚙️ <span>Settings</span></a>
-      <a class="sb-item" href="#" id="btn-signout">🚪 <span>Sign out</span></a>
+      <div class="sb-item" onclick="showSection('section-profile')">👤 <span>My profile</span></div>
+      <div class="sb-item" onclick="showSection('section-settings')">⚙️ <span>Settings</span></div>
+      <div class="sb-item" id="btn-signout">🚪 <span>Sign out</span></div>
     </div>
 
+    <!-- Footer : ancré en bas, toujours visible -->
     <div class="sidebar-footer">
       <div style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <!-- Initiales chargées dynamiquement -->
         <div class="user-avatar" id="sidebar-avatar">–</div>
         <div>
           <div class="user-name" id="sidebar-name">Loading…</div>
@@ -147,109 +241,271 @@
         </div>
       </div>
     </div>
+
   </aside>
 
   <!-- ─── MAIN ─── -->
   <main class="dash-main">
 
-    <!-- Header -->
-    <div class="dash-header">
-      <div>
-        <h1 id="dash-greeting">Good morning 👋</h1>
-        <p>Here's what's happening with your events today</p>
+    <!-- ═══ SECTION : DASHBOARD (accueil) ═══ -->
+    <div id="section-dashboard" class="dash-section">
+      <div class="dash-header">
+        <div>
+          <h1 id="dash-greeting">Good morning 👋</h1>
+          <p>Here's what's happening with your events today</p>
+        </div>
+        <a class="btn-create" href="/create-event">+ Create new event</a>
       </div>
-      <a class="btn-create" href="/create-event">+ Create new event</a>
-    </div>
 
-    <!-- KPI Cards -->
-    <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-top">
-          <div class="kpi-icon" style="background:var(--blue-l)">🗓</div>
-          <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Active</span>
+      <!-- KPI Cards -->
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--blue-l)">🗓</div>
+            <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Active</span>
+          </div>
+          <div class="kpi-num" id="kpi-events"><span class="skeleton" style="width:40px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
+          <div class="kpi-lbl">Active events</div>
         </div>
-        <div class="kpi-num" id="kpi-events"><span class="skeleton" style="width:40px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
-        <div class="kpi-lbl">Active events</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-top">
-          <div class="kpi-icon" style="background:#FEF9C3">🎫</div>
-          <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Total</span>
+        <div class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#FEF9C3">🎫</div>
+            <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Total</span>
+          </div>
+          <div class="kpi-num" id="kpi-tickets"><span class="skeleton" style="width:50px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
+          <div class="kpi-lbl">Tickets sold</div>
         </div>
-        <div class="kpi-num" id="kpi-tickets"><span class="skeleton" style="width:50px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
-        <div class="kpi-lbl">Tickets sold</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-top">
-          <div class="kpi-icon" style="background:#F0FDF4">💰</div>
-          <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Revenue</span>
+        <div class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#F0FDF4">💰</div>
+            <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Revenue</span>
+          </div>
+          <div class="kpi-num" id="kpi-revenue"><span class="skeleton" style="width:60px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
+          <div class="kpi-lbl">Total revenue</div>
         </div>
-        <div class="kpi-num" id="kpi-revenue"><span class="skeleton" style="width:60px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
-        <div class="kpi-lbl">Total revenue</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-top">
-          <div class="kpi-icon" style="background:#FDF4FF">⭐</div>
-          <span class="kpi-delta" style="background:#FEF9C3;color:#B45309">Rating</span>
+        <div class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#FDF4FF">⭐</div>
+            <span class="kpi-delta" style="background:#FEF9C3;color:#B45309">Rating</span>
+          </div>
+          <div class="kpi-num" id="kpi-rating"><span class="skeleton" style="width:40px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
+          <div class="kpi-lbl">Avg. rating</div>
         </div>
-        <div class="kpi-num" id="kpi-rating"><span class="skeleton" style="width:40px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
-        <div class="kpi-lbl">Avg. rating</div>
       </div>
-    </div>
 
-    <!-- Grid principale -->
-    <div class="grid-2">
+      <!-- Notifications récentes (aperçu rapide) -->
+      <div class="card" style="max-width:480px">
+        <div class="card-title">Recent Notifications <a onclick="showSection('section-notifications')">View all</a></div>
+        <div class="notif-item">
+          <div class="notif-dot" style="background:var(--blue)"></div>
+          <div><p><strong>New registration</strong> on one of your events</p><time>Just now</time></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-dot" style="background:#10B981"></div>
+          <div><p>You received a <strong>new review</strong></p><time>1 hour ago</time></div>
+        </div>
+        <div class="notif-item">
+          <div class="notif-dot" style="background:#EF4444"></div>
+          <div><p>Unread <strong>messages</strong> from attendees</p><time>Today</time></div>
+        </div>
+      </div>
+    </div><!-- /section-dashboard -->
 
-      <!-- Carte : My Events -->
+
+    <!-- ═══ SECTION : MES ÉVÉNEMENTS ═══ -->
+    <div id="section-my-events" class="dash-section section-hidden">
+
+      <div class="dash-header">
+        <div>
+          <h1 style="font-family:'Fraunces',serif;font-size:1.6rem">My Events</h1>
+          <p style="color:var(--slate3);font-size:.83rem;margin-top:2px">Manage and track all your events</p>
+        </div>
+        <a class="btn-create" href="/create-event">+ Create new event</a>
+      </div>
+
+      <!-- Graphique global Chart.js -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-title">Global event statistics</div>
+        <div class="chart-canvas-wrap">
+          <canvas id="chart-global"></canvas>
+        </div>
+      </div>
+
+      <!-- Grid : liste events + colonne droite -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">My Events <a href="#">Manage all →</a></div>
+          <div id="events-list">
+            <p style="font-size:.82rem;color:var(--slate3)">Loading events…</p>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <!-- Chart CSS : inscriptions hebdomadaires -->
+          <div class="card">
+            <div class="card-title">Weekly Registrations</div>
+            <div class="chart-bars">
+              <div class="bar-wrap"><div class="bar" style="height:35%;background:var(--blue-m)"></div><div class="bar-lbl">Mon</div></div>
+              <div class="bar-wrap"><div class="bar" style="height:55%;background:var(--blue-m)"></div><div class="bar-lbl">Tue</div></div>
+              <div class="bar-wrap"><div class="bar" style="height:45%;background:var(--blue-m)"></div><div class="bar-lbl">Wed</div></div>
+              <div class="bar-wrap"><div class="bar" style="height:70%;background:var(--blue-m)"></div><div class="bar-lbl">Thu</div></div>
+              <div class="bar-wrap"><div class="bar" style="height:90%;background:var(--blue)"></div><div class="bar-lbl">Fri</div></div>
+              <div class="bar-wrap"><div class="bar" style="height:60%;background:var(--blue-m)"></div><div class="bar-lbl">Sat</div></div>
+              <div class="bar-wrap"><div class="bar" style="height:40%;background:var(--blue-m)"></div><div class="bar-lbl">Sun</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /section-my-events -->
+
+
+    <!-- ═══ SECTION : PARTICIPANTS D'UN ÉVÉNEMENT ═══ -->
+    <div id="section-event-attendees" class="dash-section section-hidden">
+      <button class="back-btn" id="btn-back-events">← Back to events</button>
+      <div class="dash-header" style="margin-bottom:18px">
+        <div>
+          <h1 id="attendees-title" style="font-family:'Fraunces',serif;font-size:1.4rem">Attendees</h1>
+          <p style="color:var(--slate3);font-size:.83rem;margin-top:2px">Registered participants for this event</p>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-title">Registration pace</div>
+        <div class="chart-canvas-wrap">
+          <canvas id="chart-attendees"></canvas>
+        </div>
+      </div>
       <div class="card">
-        <div class="card-title">My Events <a href="#">Manage all →</a></div>
-        <!-- Les lignes sont injectées par dashboard.js -->
-        <div id="events-list">
-          <p style="font-size:.82rem;color:var(--slate3)">Loading events…</p>
+        <div class="card-title">Attendees list</div>
+        <div style="overflow-x:auto">
+          <table class="attendees-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Ticket type</th><th>Registered on</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="attendees-tbody"></tbody>
+          </table>
         </div>
       </div>
+    </div><!-- /section-event-attendees -->
 
-      <!-- Colonne droite -->
-      <div style="display:flex;flex-direction:column;gap:18px">
 
-        <!-- Carte : Notifications statiques (pas d'API dédiée pour l'instant) -->
-        <div class="card">
-          <div class="card-title">Recent Notifications <a href="#">View all</a></div>
-          <div class="notif-item">
-            <div class="notif-dot" style="background:var(--blue)"></div>
-            <div><p><strong>New registration</strong> on one of your events</p><time>Just now</time></div>
-          </div>
-          <div class="notif-item">
-            <div class="notif-dot" style="background:#10B981"></div>
-            <div><p>You received a <strong>new review</strong></p><time>1 hour ago</time></div>
-          </div>
-          <div class="notif-item">
-            <div class="notif-dot" style="background:#EF4444"></div>
-            <div><p>Unread <strong>messages</strong> from attendees</p><time>Today</time></div>
-          </div>
-        </div>
+    <!-- ═══ SECTION : MESSAGES (interface messagerie complète) ═══ -->
+    <div id="section-messages" class="dash-section section-hidden section-messages-full">
+      <div class="messages-layout">
 
-        <!-- Carte : Chart statique (données réelles nécessiteraient une API /weekly) -->
-        <div class="card">
-          <div class="card-title">Weekly Registrations</div>
-          <div class="chart-bars" id="chart-bars">
-            <!-- Barres statiques — remplaçables par une vraie API plus tard -->
-            <div class="bar-wrap"><div class="bar" style="height:35%;background:var(--blue-m)"></div><div class="bar-lbl">Mon</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:55%;background:var(--blue-m)"></div><div class="bar-lbl">Tue</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:45%;background:var(--blue-m)"></div><div class="bar-lbl">Wed</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:70%;background:var(--blue-m)"></div><div class="bar-lbl">Thu</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:90%;background:var(--blue)"></div><div class="bar-lbl">Fri</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:60%;background:var(--blue-m)"></div><div class="bar-lbl">Sat</div></div>
-            <div class="bar-wrap"><div class="bar" style="height:40%;background:var(--blue-m)"></div><div class="bar-lbl">Sun</div></div>
+        <!-- Sidebar conversations -->
+        <div class="msg-sidebar">
+          <div class="msg-sidebar-header">
+            <h2>Messages</h2>
+            <button class="btn-secondary" id="toggle-new-convo-btn">+ New</button>
+          </div>
+
+          <!-- Panneau nouvelle conversation -->
+          <div id="new-convo-panel" style="display:none;padding:12px;border-bottom:1px solid var(--border);">
+            <label style="font-size:.75rem;font-weight:600;color:var(--slate3);display:block;margin-bottom:6px">RECIPIENT USER ID</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="receiver-id" placeholder="User UUID…" style="flex:1;font-size:.8rem;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;outline:none;font-family:'Plus Jakarta Sans',sans-serif" />
+              <button class="btn-secondary" id="create-convo-btn">OK</button>
+            </div>
+          </div>
+
+          <div class="msg-search">
+            <input type="text" id="search-input" placeholder="Search conversations…" />
+          </div>
+
+          <div class="msg-list" id="conversation-list">
+            <p style="padding:16px;font-size:.8rem;color:var(--slate3)">Loading…</p>
           </div>
         </div>
 
+        <!-- Zone chat -->
+        <div class="msg-main">
+          <div class="msg-header" id="msg-header" style="display:none">
+            <div class="thread-avatar" id="chat-avatar" style="width:36px;height:36px;border-radius:9px;font-size:.8rem;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0"></div>
+            <div>
+              <div class="msg-title" id="chat-name">—</div>
+              <div class="msg-subtitle" id="chat-sub"></div>
+            </div>
+          </div>
+
+          <div id="no-convo-placeholder" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--slate3);font-size:.88rem">
+            Select a conversation to start
+          </div>
+
+          <div class="msg-body" id="msg-body" style="display:none"></div>
+
+          <div class="msg-input-row" id="msg-input-row" style="display:none">
+            <input type="text" id="msg-input" placeholder="Type a message…" />
+            <button class="msg-send-btn" id="send-btn" disabled>➤</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /section-messages -->
+
+
+    <!-- ═══ SECTIONS "EN CONSTRUCTION" ═══ -->
+    <div id="section-tickets" class="dash-section section-hidden">
+      <div class="wip-section">
+        <div class="wip-icon">🚧</div>
+        <h2>Tickets</h2>
+        <p>This section is under construction. Check back soon!</p>
+      </div>
+    </div>
+
+    <div id="section-attendees-wip" class="dash-section section-hidden">
+      <div class="wip-section">
+        <div class="wip-icon">🚧</div>
+        <h2>Attendees</h2>
+        <p>Global attendees management coming soon.</p>
+      </div>
+    </div>
+
+    <div id="section-notifications" class="dash-section section-hidden">
+      <div class="wip-section">
+        <div class="wip-icon">🚧</div>
+        <h2>Notifications</h2>
+        <p>Notification center coming soon.</p>
+      </div>
+    </div>
+
+    <div id="section-reports" class="dash-section section-hidden">
+      <div class="wip-section">
+        <div class="wip-icon">🚧</div>
+        <h2>Reports</h2>
+        <p>Analytics and reporting coming soon.</p>
+      </div>
+    </div>
+
+    <div id="section-revenue" class="dash-section section-hidden">
+      <div class="wip-section">
+        <div class="wip-icon">🚧</div>
+        <h2>Revenue</h2>
+        <p>Revenue dashboard coming soon.</p>
+      </div>
+    </div>
+
+    <div id="section-settings" class="dash-section section-hidden">
+      <div class="wip-section">
+        <div class="wip-icon">🚧</div>
+        <h2>Settings</h2>
+        <p>Account settings coming soon.</p>
+      </div>
+    </div>
+
+    <div id="section-profile" class="dash-section section-hidden">
+      <div class="wip-section">
+        <div class="wip-icon">🚧</div>
+        <h2>My Profile</h2>
+        <p>Profile management coming soon.</p>
       </div>
     </div>
 
   </main>
 </div>
 
+<!-- Socket.io + scripts -->
+<script src="/socket.io/socket.io.js"></script>
 <script src="/js/dashboard.js"></script>
 </body>
 </html>

@@ -109,11 +109,14 @@ async bookEvent(eventId, userId) {
       await client.query('BEGIN');
 
       // Insertion de l'événement (statut forcé à 'draft')
+      const prices   = (tickets || []).map(t => parseFloat(t.price)).filter(p => !isNaN(p));
+      const minPrice = prices.length ? Math.min(...prices) : 0;
+
       const { rows: [event] } = await client.query(
         `INSERT INTO events
            (title, description, category, cover_image_url, start_date, end_date,
-            location, max_participants, status, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'draft',$9)
+            location, max_participants, status, created_by, price)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'draft',$9,$10)
          RETURNING *`,
         [
           eventData.title,
@@ -125,6 +128,7 @@ async bookEvent(eventId, userId) {
           eventData.location || null,
           eventData.capacity || null,
           eventData.created_by,
+          minPrice,
         ]
       );
 
@@ -171,7 +175,30 @@ async bookEvent(eventId, userId) {
     return rows[0] ?? null;
   },
 
-  // Events d'un organisateur avec stats de remplissage
+ 
+  async getEventDetailsById(eventId) {
+    const { rows } = await pool.query(
+      `SELECT
+         e.*,
+         u.first_name, u.last_name, u.avatar_url,
+         COUNT(ep.id) FILTER (WHERE ep.status = 'registered') AS registered_count,
+         COALESCE(
+           json_agg(
+             json_build_object('id', tt.id, 'name', tt.name, 'description', tt.description, 'price', tt.price)
+           ) FILTER (WHERE tt.id IS NOT NULL),
+           '[]'
+         ) AS ticket_types
+       FROM events e
+       LEFT JOIN users u ON u.id = e.created_by
+       LEFT JOIN event_participants ep ON ep.event_id = e.id
+       LEFT JOIN event_ticket_types tt ON tt.event_id = e.id
+       WHERE e.id = $1
+       GROUP BY e.id, u.first_name, u.last_name, u.avatar_url`,
+      [eventId]
+    );
+    return rows[0] ?? null;
+  },
+
   async getOrganizerEvents(userId) {
     const { rows } = await pool.query(
       `SELECT
@@ -186,13 +213,64 @@ async bookEvent(eventId, userId) {
       [userId]
     );
 
-    // Calcule le pourcentage de remplissage
     return rows.map(ev => ({
       ...ev,
       fill_pct: ev.max_participants
         ? Math.round((ev.registered_count / ev.max_participants) * 100)
         : null,
     }));
+  },
+
+  // Retourne les participants d'un event — SEULEMENT si l'event appartient à organizerId
+  async getEventAttendees(eventId, organizerId) {
+    const { rows } = await pool.query(
+      `SELECT
+         u.first_name, u.last_name, u.email,
+         ep.status,
+         ep.registered_at,
+         COALESCE(ett.name, 'Standard') AS ticket_type
+       FROM event_participants ep
+       JOIN events e   ON e.id  = ep.event_id
+       JOIN users  u   ON u.id  = ep.user_id
+       LEFT JOIN event_ticket_types ett ON ett.event_id = ep.event_id
+       WHERE ep.event_id = $1
+         AND e.created_by = $2        -- sécurité : seul le créateur peut voir
+         AND ep.status = 'registered'
+       ORDER BY ep.registered_at ASC`,
+      [eventId, organizerId]
+    );
+    return rows;
+  },
+
+  // Retourne le nb d'inscriptions groupées par jour (pour Chart.js)
+  async getEventRegistrationStats(eventId, organizerId) {
+    const { rows } = await pool.query(
+      `SELECT
+         DATE(ep.registered_at) AS day,
+         COUNT(*)               AS count
+       FROM event_participants ep
+       JOIN events e ON e.id = ep.event_id
+       WHERE ep.event_id  = $1
+         AND e.created_by = $2
+         AND ep.status    = 'registered'
+       GROUP BY DATE(ep.registered_at)
+       ORDER BY day ASC`,
+      [eventId, organizerId]
+    );
+    return rows;
+  },
+
+  // Met le statut de l'event à 'cancelled' — SEULEMENT si l'event appartient à organizerId
+  async cancelEvent(eventId, organizerId) {
+    const { rows } = await pool.query(
+      `UPDATE events
+       SET status = 'cancelled', updated_at = NOW()
+       WHERE id = $1 AND created_by = $2
+       RETURNING id, title, status`,
+      [eventId, organizerId]
+    );
+    // rows[0] est undefined si l'event n'existe pas ou n'appartient pas à cet organisateur
+    return rows[0] ?? null;
   },
 };
 

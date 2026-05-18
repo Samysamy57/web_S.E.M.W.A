@@ -1,5 +1,6 @@
 // Fichier : controllers/eventController.js
 import Event from '../models/eventModel.js';
+import Review from '../models/ReviewModel.js';
 
 // GET /participant-home — récupère tous les events publiés
 export async function createEvent(req, res) {
@@ -32,6 +33,19 @@ export async function createEvent(req, res) {
     res.status(201).json({ message: 'Event created as draft.', event });
   } catch (err) {
     console.error('[createEvent]', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+}
+
+export async function getEventById(req, res) {
+  try {
+    const event = await Event.getEventDetailsById(req.params.id);
+    if (!event) return res.status(404).json({ error: 'Event not found.' });
+
+    const rating = await Review.getEventAverageRating(req.params.id);
+    res.json({ ...event, avg_rating: rating.avg_rating, review_count: rating.review_count });
+  } catch (err) {
+    console.error('[getEventById]', err);
     res.status(500).json({ error: 'Server error.' });
   }
 }
