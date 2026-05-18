@@ -57,15 +57,17 @@ function buildEventCard(event) {
   card.dataset.eventId    = event.id;
   card.dataset.eventTitle = event.title;
 
+  const detailUrl = `/event-detail?id=${event.id}`;
+
   card.innerHTML = `
-    <div class="card-img" style="background:${style.gradient}">
+    <div class="card-img" style="background:${style.gradient};cursor:pointer" onclick="window.location.href='${detailUrl}'">
       <div class="card-img-bg">${style.emoji}</div>
       <span class="card-cat" style="background:${style.bg};color:${style.color}">
         ${event.category || 'Event'}
       </span>
     </div>
     <div class="card-body">
-      <h3>${event.title}</h3>
+      <h3 style="cursor:pointer" onclick="window.location.href='${detailUrl}'">${event.title}</h3>
       <div class="card-meta">
         <span>📅 ${formatDate(event.start_date)}</span>
         ${event.city ? `<span>📍 ${event.city}</span>` : ''}
@@ -118,7 +120,9 @@ function buildFeaturedCard(event) {
       </div>
     </div>`;
 
-  card.addEventListener('click', () => openBookModal(event.id, event.title));
+  card.addEventListener('click', () => {
+    window.location.href = `/event-detail?id=${event.id}`;
+  });
   return card;
 }
 

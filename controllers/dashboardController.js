@@ -60,6 +60,47 @@ const dashboardController = {
       res.status(500).json({ error: 'Internal server error.' });
     }
   },
+
+  // GET /api/dashboard/events/:id/attendees
+  async getEventAttendees(req, res) {
+    try {
+      const { id } = req.params;
+      const organizerId = req.user.id;
+
+      // Récupère participants + stats en parallèle
+      const [attendees, stats] = await Promise.all([
+        Event.getEventAttendees(id, organizerId),
+        Event.getEventRegistrationStats(id, organizerId),
+      ]);
+
+      // Si aucun résultat ET l'event n'existe pas / n'appartient pas à cet organisateur
+      // On renvoie quand même un tableau vide (l'event peut juste avoir 0 inscrits)
+      res.json({ attendees, stats });
+    } catch (err) {
+      console.error('[dashboard/attendees]', err);
+      res.status(500).json({ error: 'Internal server error.' });
+    }
+  },
+
+  // PATCH /api/dashboard/events/:id/cancel
+  async cancelEvent(req, res) {
+    try {
+      const { id } = req.params;
+      const organizerId = req.user.id;
+
+      const cancelled = await Event.cancelEvent(id, organizerId);
+
+      // null = event introuvable ou pas le bon organisateur
+      if (!cancelled) {
+        return res.status(404).json({ error: 'Event not found or access denied.' });
+      }
+
+      res.json({ message: 'Event cancelled.', event: cancelled });
+    } catch (err) {
+      console.error('[dashboard/cancel]', err);
+      res.status(500).json({ error: 'Internal server error.' });
+    }
+  },
 };
 
 export default dashboardController;

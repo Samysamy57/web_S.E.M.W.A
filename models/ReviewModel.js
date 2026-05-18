@@ -3,6 +3,17 @@ import pool from '../config/db.js';
 
 const ReviewModel = {
 
+  // Note moyenne + nb d'avis pour un événement spécifique
+  async getEventAverageRating(eventId) {
+    const { rows } = await pool.query(
+      `SELECT ROUND(AVG(rating)::numeric, 1) AS avg_rating, COUNT(*) AS review_count
+       FROM event_reviews
+       WHERE event_id = $1`,
+      [eventId]
+    );
+    return rows[0];
+  },
+
   // Moyenne des notes pour tous les events d'un organisateur
   async getOrganizerRating(userId) {
     const { rows } = await pool.query(
