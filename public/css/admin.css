@@ -762,3 +762,7 @@ tbody tr:last-child td {
 .section-messages-full .bubble.other     { background:#fff; color:var(--slate); border:1px solid var(--border); border-bottom-left-radius:4px; }
 .section-messages-full .bubble.own       { background:var(--blue); color:#fff; border-bottom-right-radius:4px; }
 .section-messages-full .bubble-time      { font-size:.68rem; color:var(--slate4); margin-top:4px; }
+
+/* ═══════════════════════════════════════
+   SECTION PROFILE
+═══════════════════════════════════════ */
