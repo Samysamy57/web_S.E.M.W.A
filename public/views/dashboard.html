@@ -226,9 +226,7 @@
     <!-- Settings : statique, ancré au-dessus du footer, jamais masqué -->
     <div class="sidebar-section" style="padding:14px 14px 10px">
       <div class="sidebar-label">Settings</div>
-      <div class="sb-item" onclick="showSection('section-profile')">👤 <span>My profile</span></div>
       <div class="sb-item" onclick="showSection('section-settings')">⚙️ <span>Settings</span></div>
-      <div class="sb-item" id="btn-signout">🚪 <span>Sign out</span></div>
     </div>
 
     <!-- Footer : ancré en bas, toujours visible -->
@@ -248,14 +246,13 @@
   <main class="dash-main">
 
     <!-- ═══ SECTION : DASHBOARD (accueil) ═══ -->
-    <div id="section-dashboard" class="dash-section">
-      <div class="dash-header">
-        <div>
-          <h1 id="dash-greeting">Good morning 👋</h1>
-          <p>Here's what's happening with your events today</p>
-        </div>
-        <a class="btn-create" href="/create-event">+ Create new event</a>
-      </div>
+    <div id="section-dashboard" class="dash-section" style="align-content: center;">
+      <div class="dash-header" style="align-items:center; padding-left: 5em;">
+      <div><h1 id="dash-greeting" style="margin-right: 10em;">Good morning 👋</h1>
+        <p>Here's what's happening with your events today</p></div>
+        <div><a class="btn-create" id="dash-name" onclick="showSection('section-profile')" style="margin-left:15em;padding: 0.5em 1.5em;background: #132d52; color: white; font-weight: bolder; font-size: larger; display: var(--border); border-radius: 1em;"><span>Loading...</span></a></div>
+        <a class="btn-create" id="btn-signout" style="margin-left:5em;background-color: #132d52">⬅<span>Sign out</span></a>
+    </div>
 
       <!-- KPI Cards -->
       <div class="kpi-row">
