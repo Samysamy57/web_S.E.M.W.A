@@ -312,7 +312,7 @@ async function loadUser() {
 
     const initials = (user.first_name[0] + user.last_name[0]).toUpperCase();
     document.getElementById('sidebar-avatar').textContent = initials;
-    document.getElementById('sidebar-name').textContent   = `${user.first_name} ${user.last_name}`;
+    document.getElementById('sidebar-name').textContent   = `${user.first_name}`;
     document.getElementById('dash-greeting').textContent  = `${getGreeting()}, ${user.first_name} 👋`;
     document.getElementById('dash-name').innerHTML   = `${user.first_name}`+'👤';
   } catch (err) {
