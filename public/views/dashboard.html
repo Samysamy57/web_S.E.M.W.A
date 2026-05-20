@@ -247,13 +247,14 @@
 
     <!-- ═══ SECTION : DASHBOARD (accueil) ═══ -->
     <div id="section-dashboard" class="dash-section" style="align-content: center;">
-      <div class="dash-header" style="align-items:center; padding-left: 5em;">
-      <div><h1 id="dash-greeting" style="margin-right: 10em;">Good morning 👋</h1>
+      <div class="dash-header" style="align-items:center;">
+      <div style="width:30em"><h1 id="dash-greeting" style="margin-right: 0.5em;"></h1>
         <p>Here's what's happening with your events today</p></div>
-        <div style="display:flexbox;">
-          <a class="btn-create" id="dash-name" onclick="showSection('section-profile')" style="align-items:center ;margin-left:5em;padding: 0.5em 1.5em;background: #132d52; color: white; font-weight: bolder; font-size:1.0em; display: var(--border); border-radius: 1em;"><span>Loading...</span></a></div>
-          <a class="btn-create" id="btn-signout" style="margin-left:5em;background-color: #132d52">⬅<span>Sign out</span></a>
-    </div>
+        <div style="display:block;align-items: center; width:20%;padding:2%">
+          <a class="btn-create" id="btn-signout" style="width:10em;background-color: #132d52">⬅<span>Sign out</span></a><br>
+          <a class="btn-create" id="dash-name" onclick="showSection('section-profile')" style="align-items:center;padding: 0.5em 1.5em;background: #132d52; color: white; font-weight: bolder; font-size:1.0em; display: var(--border); border-radius: 1em;"><span>Loading...</span></a>
+        </div>
+      </div>
 
       <!-- KPI Cards -->
       <div class="kpi-row">
