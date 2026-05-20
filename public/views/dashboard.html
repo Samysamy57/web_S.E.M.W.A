@@ -218,7 +218,6 @@
       <div class="sidebar-section" style="margin-top:14px">
         <div class="sidebar-label">Analytics</div>
         <div class="sb-item" onclick="showSection('section-reports')">📈 <span>Reports</span></div>
-        <div class="sb-item" onclick="showSection('section-revenue')">💳 <span>Revenue</span></div>
       </div>
 
     </div><!-- /sidebar-nav -->
@@ -250,8 +249,8 @@
       <div class="dash-header" style="align-items:center;">
       <div style="width:30em"><h1 id="dash-greeting" style="margin-right: 0.5em;"></h1>
         <p>Here's what's happening with your events today</p></div>
-        <div style="display:block;align-items: center; width:30%;padding:1%">
-          <a class="btn-create" id="btn-signout" style="width:7.0em;background-color: #132d52; padding:2%;">⬅<span>Sign out</span></a><br>
+        <div style="display:flexbox ;align-items:center;">
+          <a class="btn-create" id="btn-signout" style="width:8.0em;background-color: #132d52; padding-right:1%;">⬅<span>Sign out</span></a><br>
           <a class="btn-create" id="dash-name" onclick="showSection('section-profile')" style="align-items:center;padding: 0.5em 1.5em;background: #132d52; color: white; font-weight: bolder; font-size:1.0em; display: var(--border); border-radius: 1em;"><span>Loading...</span></a>
         </div>
       </div>
@@ -274,7 +273,7 @@
           <div class="kpi-num" id="kpi-tickets"><span class="skeleton" style="width:50px;height:30px">&nbsp;&nbsp;&nbsp;</span></div>
           <div class="kpi-lbl">Tickets sold</div>
         </div>
-        <div class="kpi">
+        <div class="kpi" onclick="showSection('section-revenue')">
           <div class="kpi-top">
             <div class="kpi-icon" style="background:#F0FDF4">💰</div>
             <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Revenue</span>
@@ -493,8 +492,11 @@
     </div>
 
     <div id="section-profile" class="dash-section section-hidden">
-      <div class="wip-section">
-        <h2>My Profile</h2>
+      <div class="wip-section" style="max-width:400px;text-align:center">
+        <h1>My Profile</h1>
+        <h1>My Profile</h1>
+        <div style="width:30em;margin-top:1em"><p>This section will display your profile information and allow you to edit your details, change your password, and manage your account settings. Stay tuned for updates!</p></div>
+
         <div class="wip-icon"></div>
       </div>
     </div>
