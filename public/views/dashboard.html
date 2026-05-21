@@ -185,7 +185,6 @@
 </div>
 
 <div class="dash-layout">
-
   <!-- ─── SIDEBAR ─── -->
   <aside class="sidebar">
 
@@ -491,16 +490,22 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════
+      SECTION PROFILE
+    ═══════════════════════════════════════ -->
     <div id="section-profile" class="dash-section section-hidden">
-      <div class="wip-section" style="max-width:400px;text-align:center">
-        <h1>My Profile</h1>
-        <h1>My Profile</h1>
-        <div style="width:30em;margin-top:1em"><p>This section will display your profile information and allow you to edit your details, change your password, and manage your account settings. Stay tuned for updates!</p></div>
-
-        <div class="wip-icon"></div>
-      </div>
+      <div class="wip-section" style="text-align:center; width:100%; height:100%">
+            <div class="profile-picture">
+              <h1 class="upload-icon">
+                <i class="fa fa-plus fa-2x" aria-hidden="true"></i>
+              </h1>
+              <input class="file-uploader" type="file" onchange="upload()"accept="image/*"/>
+            </div><br><br>
+            <div style="width:30em">Name :<h1 id="dash-profile" style="margin-right: 0.5em; color: black;"></h1></div>   
+            <div style="width:30em">Email :<h1 id="dash-email" style="margin-right: 0.5em; color: black;"></h1></div>
+        <div style="margin-top:1em"></div>
+      <div class="wip-icon"></div>
     </div>
-
   </main>
 </div>
 
