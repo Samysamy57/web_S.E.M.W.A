@@ -62,9 +62,9 @@ function showSection(sectionId) {
   document.getElementById(sectionId)?.classList.remove('section-hidden');
 
   // Met à jour l'item actif dans la sidebar
-  document.querySelectorAll('.sb-item').forEach(item => item.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(item => item.classList.remove('Activated'));
   const activeItem = document.querySelector(`.sb-item[onclick="showSection('${sectionId}')"]`);
-  if (activeItem) activeItem.classList.add('active');
+  if (activeItem) activeItem.classList.add('Activated');
 
   // Charge les conversations uniquement au 1er clic sur Messages
   if (sectionId === 'section-messages' && !messagesLoaded) {
@@ -291,9 +291,9 @@ async function loadEvents() {
           </div>
           <!-- 3 boutons d'action -->
           <div class="event-actions">
-            <button class="btn-primary"   onclick="viewEventAttendees('${ev.id}', '${safeTitleAttr}')">Voir Participants</button>
-            <button class="btn-secondary" onclick="window.location.href='/create-event?edit=${ev.id}'">Modifier</button>
-            <button class="btn-danger"    onclick="openCancelModal('${ev.id}')">Annuler</button>
+            <button class="btn-primary"   onclick="viewEventAttendees('${ev.id}', '${safeTitleAttr}')">Participant</button>
+            <button class="btn-secondary" onclick="window.location.href='/create-event?edit=${ev.id}'">Modify</button>
+            <button class="btn-danger"    onclick="openCancelModal('${ev.id}')">Cancel</button>
           </div>
         </div>`;
     }).join('');
@@ -477,7 +477,7 @@ function selectConversation(conversationId, receiverId) {
   currentConversationId = conversationId;
   currentReceiverId     = receiverId;
 
-  document.querySelectorAll('.msg-thread').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.msg-thread').forEach(c => c.classList.remove('Activated'));
   const card = document.querySelector(`.msg-thread[data-id="${conversationId}"]`);
   if (card) {
     card.classList.add('active');
