@@ -307,6 +307,7 @@ async function loadEvents() {
 // ──  SECTION REPORTS ───────────────────────────
 
 
+
 // ── Infos utilisateur (sidebar) ───────────────────────────
 async function loadUser() {
   try {
@@ -581,12 +582,12 @@ async function init() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       closeModal('modal-cancel');
-      showToast('Événement annulé.');
+      showToast('Event cancelled.');
       cancelTargetEventId = null;
       await loadEvents(); // recharge la liste pour refléter le nouveau statut
     } catch (err) {
       console.error('[cancel]', err);
-      showToast('Erreur lors de l\'annulation.', true);
+      showToast('Error occurred while cancelling the event.', true);
     }
   });
 }
