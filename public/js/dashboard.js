@@ -304,6 +304,9 @@ async function loadEvents() {
   }
 }
 
+// ──  SECTION REPORTS ───────────────────────────
+
+
 // ── Infos utilisateur (sidebar) ───────────────────────────
 async function loadUser() {
   try {
