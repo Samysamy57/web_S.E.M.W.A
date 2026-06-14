@@ -26,7 +26,7 @@ async findEvent(filter) {
   }
 
   if (date) {
-    conditions.push(`DATE(e.start_date) = $${index}`);
+    conditions.push(`e.start_date::date = $${index}`);
     values.push(date);
     index++;
   }
@@ -246,14 +246,14 @@ async bookEvent(eventId, userId) {
   async getEventRegistrationStats(eventId, organizerId) {
     const { rows } = await pool.query(
       `SELECT
-         DATE(ep.registered_at) AS day,
+         ep.registered_at::date AS day,
          COUNT(*)               AS count
        FROM event_participants ep
        JOIN events e ON e.id = ep.event_id
        WHERE ep.event_id  = $1
          AND e.created_by = $2
          AND ep.status    = 'registered'
-       GROUP BY DATE(ep.registered_at)
+       GROUP BY ep.registered_at::date
        ORDER BY day ASC`,
       [eventId, organizerId]
     );
