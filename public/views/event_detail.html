@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/admin.css" />
   <link rel="stylesheet" href="/css/event_detail.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
 
@@ -110,7 +111,7 @@
         <!-- Localisation -->
         <div style="margin-top:14px">
           <div style="font-size:.82rem;font-weight:700;margin-bottom:8px;color:var(--slate)">Location</div>
-          <div class="map-placeholder" id="map-link">🗺 View on OpenStreetMap</div>
+          <div id="map" style="height:160px;border-radius:12px;overflow:hidden;border:1px solid var(--border)"></div>
           <div style="font-size:.78rem;color:var(--slate3)" id="location-text">—</div>
         </div>
 
@@ -163,6 +164,7 @@
 
 <link rel="stylesheet" href="/css/notifications.css">
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/js/global-notifications.js"></script>
 <script src="/js/event_detail.js"></script>
 </body>

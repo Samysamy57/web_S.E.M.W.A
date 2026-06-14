@@ -115,14 +115,57 @@ function populatePage(event) {
   document.getElementById('org-meta').textContent = 'Organizer';
 
   // Lien OpenStreetMap
-  const query = encodeURIComponent(event.location || event.city || '');
-  document.getElementById('map-link').onclick = () =>
-    window.open(`https://www.openstreetmap.org/search?query=${query}`, '_blank');
   document.getElementById('location-text').innerHTML =
     `${event.location || ''}${event.city ? '<br>' + event.city : ''}`;
+  initMap(event.location || event.city || '');
 
   // Bouton book → ouvre la modale de réservation
   document.getElementById('btn-book-ticket').onclick = () => openDetailBookModal(event);
+}
+
+// ─── CARTE LEAFLET ────────────────────────────────────
+let _map = null; // évite la double-initialisation
+
+async function initMap(address) {
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
+
+  // Coordonnées par défaut : Paris
+  const PARIS = [48.8566, 2.3522];
+
+  // Initialise la carte une seule fois
+  if (!_map) {
+    _map = L.map('map', { zoomControl: true, scrollWheelZoom: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+    }).addTo(_map);
+  }
+
+  if (!address) {
+    _map.setView(PARIS, 12);
+    return;
+  }
+
+  try {
+    // Géocodage via Nominatim (API gratuite OSM)
+    const res  = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`,
+      { headers: { 'Accept-Language': 'en' } }
+    );
+    const data = await res.json();
+
+    if (data.length === 0) throw new Error('Address not found');
+
+    const lat = parseFloat(data[0].lat);
+    const lon = parseFloat(data[0].lon);
+
+    _map.setView([lat, lon], 15);
+    L.marker([lat, lon]).addTo(_map).bindPopup(address).openPopup();
+
+  } catch (_) {
+    // Fallback : Paris
+    _map.setView(PARIS, 12);
+  }
 }
 
 // ─── INIT ─────────────────────────────────────────────

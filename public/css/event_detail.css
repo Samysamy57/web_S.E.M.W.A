@@ -1,10 +1,17 @@
 /* Fichier : public/css/event_detail.css */
+body {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
 /* NAV */
 .nav-bar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:12px 28px;gap:16px}
 .nav-brand{font-family:'Fraunces',serif;font-size:1.2rem;color:var(--blue);letter-spacing:-.02em}
 .nav-brand span{font-style:italic;color:var(--slate3);font-size:.8rem;margin-left:8px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400}
 .btn-ghost-sm{padding:8px 16px;background:#fff;color:var(--slate2);border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s}
 .btn-ghost-sm:hover{border-color:var(--slate3)}
+.nav-right{display:flex;align-items:center;gap:10px}
 
 /* TOAST */
 .toast{position:fixed;bottom:28px;right:28px;z-index:999;background:var(--slate);color:#fff;padding:14px 20px;border-radius:12px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg,0 8px 32px rgba(0,0,0,.12));transform:translateY(80px);opacity:0;transition:.3s cubic-bezier(.34,1.56,.64,1)}
