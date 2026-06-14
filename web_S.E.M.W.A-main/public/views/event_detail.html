@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Detail — S.E.M.W.A</title>
+  <!-- CSS globaux du projet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/admin.css" />
+  <link rel="stylesheet" href="/css/event_detail.css" />
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toast-icon">✓</div>
+  <span id="toast-msg">Action completed</span>
+</div>
+
+<!-- NAV -->
+<nav class="nav-bar">
+  <div class="nav-brand">S.E.M.W.A <span>— Event Detail</span></div>
+  <button class="btn-ghost-sm" id="btn-logout">Sign out</button>
+</nav>
+
+<div class="detail-wrap">
+  <button class="back-btn" onclick="history.back()">← Back to events</button>
+
+  <div class="detail-grid">
+    <!-- ── COLONNE PRINCIPALE ── -->
+    <div class="detail-main">
+
+      <!-- Bannière / cover -->
+      <div class="detail-banner" id="detail-banner">
+        <span id="detail-emoji" style="font-size:5rem;opacity:.3">📅</span>
+      </div>
+
+      <!-- Tags catégorie -->
+      <div class="detail-cats" id="detail-cats"></div>
+
+      <!-- Titre -->
+      <div class="detail-title" id="detail-title">Chargement…</div>
+
+      <!-- Métadonnées -->
+      <div class="detail-meta-row" id="detail-meta-row">
+        <div class="detail-meta-item" id="meta-date">📅 <strong>—</strong></div>
+        <div class="detail-meta-item" id="meta-location">📍 <strong>—</strong></div>
+        <div class="detail-meta-item" id="meta-participants">👥 <strong>—</strong></div>
+        <!-- Masqué si pas de note -->
+        <div class="detail-meta-item" id="meta-rating" style="display:none">
+          ⭐ <strong id="rating-text">—</strong>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="detail-section">
+        <h3>About this event</h3>
+        <p id="detail-description">—</p>
+      </div>
+
+      <!-- Types de billets -->
+      <div class="detail-section">
+        <h3>Ticket options</h3>
+        <div class="ticket-types" id="ticket-types-container">
+          <p style="color:var(--slate3);font-size:.85rem">Loading tickets…</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── SIDEBAR ── -->
+    <div class="detail-sidebar">
+      <div class="sticky-card">
+
+        <!-- Prix & capacité -->
+        <div class="price-box">
+          <div class="price-from">Starting from</div>
+          <div class="price-main" id="sidebar-price">—</div>
+          <div class="price-note">Taxes included</div>
+          <div class="capacity-bar">
+            <div class="capacity-fill" id="capacity-fill" style="width:0%"></div>
+          </div>
+          <div class="capacity-note" id="capacity-note">—</div>
+          <button class="btn-primary" id="btn-book-ticket" style="margin-bottom:10px">Book ticket →</button>
+          <button class="btn-ghost" style="width:100%;padding:10px" onclick="navigator.share ? navigator.share({title: document.title, url: location.href}) : alert('Copiez le lien dans la barre d\'adresse.')">Share event</button>
+        </div>
+
+        <!-- Organisateur -->
+        <div class="organizer-card" id="organizer-card">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+            <div class="org-avatar" id="org-avatar">?</div>
+            <div>
+              <div class="org-name" id="org-name">—</div>
+              <div class="org-meta" id="org-meta">Organizer</div>
+            </div>
+          </div>
+          <button class="btn-secondary" style="width:100%" id="btn-contact-organizer">Contact organizer</button>
+        </div>
+
+        <!-- Localisation -->
+        <div style="margin-top:14px">
+          <div style="font-size:.82rem;font-weight:700;margin-bottom:8px;color:var(--slate)">Location</div>
+          <div class="map-placeholder" id="map-link">🗺 View on OpenStreetMap</div>
+          <div style="font-size:.78rem;color:var(--slate3)" id="location-text">—</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/event_detail.js"></script>
+</body>
+</html>

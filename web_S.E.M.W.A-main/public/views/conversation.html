@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S.E.M.W.A — Messages</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/conversation.css" />
+</head>
+<body>
+
+<div class="messages-layout">
+
+  <!-- ── SIDEBAR GAUCHE ── -->
+  <div class="msg-sidebar">
+    <div class="msg-sidebar-header">
+      <h2>Messages</h2>
+      <!-- Bouton pour ouvrir le panneau "nouvelle conversation" -->
+      <button class="btn-secondary" id="toggle-new-convo-btn">+ New</button>
+    </div>
+
+    <!-- Panneau créer conversation (caché par défaut) -->
+    <div id="new-convo-panel" style="display:none; padding:12px; border-bottom:1px solid var(--border);">
+      <label style="font-size:.75rem;font-weight:600;color:var(--slate3);display:block;margin-bottom:6px">USER ID DU DESTINATAIRE</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="receiver-id" placeholder="UUID de l'utilisateur..." style="flex:1;font-size:.8rem;padding:8px 12px" />
+        <button class="btn-secondary" id="create-convo-btn">OK</button>
+      </div>
+    </div>
+
+    <div class="msg-search">
+      <input type="text" id="search-input" placeholder="Search conversations…" />
+    </div>
+
+    <!-- Liste des conversations générée dynamiquement -->
+    <div class="msg-list" id="conversation-list">
+      <p style="padding:16px;font-size:.8rem;color:var(--slate3)">Chargement...</p>
+    </div>
+  </div>
+
+  <!-- ── ZONE CHAT DROITE ── -->
+  <div class="msg-main">
+
+    <!-- Header du chat actif -->
+    <div class="msg-header" id="msg-header" style="display:none">
+      <div class="thread-avatar" id="chat-avatar" style="width:36px;height:36px;border-radius:9px;font-size:.8rem;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0"></div>
+      <div>
+        <div class="msg-title" id="chat-name">—</div>
+        <div class="msg-subtitle" id="chat-sub"></div>
+      </div>
+    </div>
+
+    <!-- Placeholder quand aucune conversation n'est sélectionnée -->
+    <div id="no-convo-placeholder" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--slate3);font-size:.88rem">
+      Sélectionne une conversation pour commencer
+    </div>
+
+    <!-- Corps des messages -->
+    <div class="msg-body" id="msg-body" style="display:none"></div>
+
+    <!-- Input d'envoi -->
+    <div class="msg-input-row" id="msg-input-row" style="display:none">
+      <input type="text" id="msg-input" placeholder="Type a message…" />
+      <button class="msg-send-btn" id="send-btn" disabled>➤</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/conversations.js"></script>
+</body>
+</html>
