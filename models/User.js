@@ -1,7 +1,7 @@
 // C:\Users\samyb\StudioProjects\web_S.E.M.W.A\models\User.js
 import pool from '../config/db.js';
 
-const SAFE_FIELDS = 'id, username, first_name, last_name, email, role, avatar_url, is_active, created_at';
+const SAFE_FIELDS = 'id, username, first_name, last_name, email, role, avatar_url, bio, is_active, created_at';
 
 const User = {
   async findByEmail(email) {
@@ -85,6 +85,26 @@ async create({ firstName, lastName, email, passwordHash, username, role = 'atten
       [newRole, userId]
     );
     return rows[0] ?? null;
+  },
+
+  // Met à jour le profil de l'utilisateur (prénom, nom, avatar, bio)
+  async updateUserProfile(userId, { firstName, lastName, avatarUrl, bio }) {
+    const { rows } = await pool.query(
+      `UPDATE users
+       SET first_name = $1, last_name = $2, avatar_url = $3, bio = $4, updated_at = NOW()
+       WHERE id = $5
+       RETURNING ${SAFE_FIELDS}`,
+      [firstName, lastName, avatarUrl ?? null, bio ?? null, userId]
+    );
+    return rows[0] ?? null;
+  },
+
+  // Met à jour la date de dernière lecture des notifications à maintenant
+  async updateLastReadNotifications(userId) {
+    await pool.query(
+      `UPDATE users SET last_read_notifications_at = NOW() WHERE id = $1`,
+      [userId]
+    );
   },
 };
 

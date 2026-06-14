@@ -8,25 +8,46 @@ let refreshInterval = null;
 const socket        = io();
 // Écoute les messages entrants en temps réel
 socket.on('private message', (data) => {
-const body = document.getElementById('admin-msg-body');
-if (!body || body.style.display === 'none') return;
-const isOwn      = data.senderId === currentUser?.id;
-const color      = isOwn ? 'var(--blue)' : adminAvatarColor(data.senderId);
-const initials   = isOwn ? (currentUser.first_name?.[0] ?? 'M').toUpperCase() : '?';
-const time       = adminFormatTime(new Date().toISOString());
-const wrapClass   = isOwn ? 'bubble-wrap own' : 'bubble-wrap';
-const bubbleClass = isOwn ? 'bubble own'       : 'bubble other';
-const div = document.createElement('div');
-div.className = wrapClass;
-div.innerHTML = `
-  <div class="bubble-avatar" style="background:${color}">${initials}</div>
-  <div>
-    <div class="${bubbleClass}">${data.content}</div>
-    <div class="bubble-time ${isOwn ? '' : 'other'}">${time}</div>
-  </div>
-`;
-body.appendChild(div);
-body.scrollTop = body.scrollHeight;
+  const body = document.getElementById('admin-msg-body');
+  if (!body || body.style.display === 'none') return;
+
+  const msg  = data.message ?? data;
+  const time = adminFormatTime(new Date().toISOString());
+
+  // isOwnFixed déclaré EN PREMIER — vérifie sent_by (vrai auteur admin) en priorité
+  const isOwnFixed    = msg.sent_by === currentUser?.id || msg.sender_id === currentUser?.id;
+  const displayName   = isOwnFixed
+    ? `${currentUser.first_name} ${currentUser.last_name}`
+    : (msg.sender_display_name || `${msg.first_name ?? ''} ${msg.last_name ?? ''}`.trim() || '?');
+  const senderIsAdmin = msg.role === 'admin' || (isOwnFixed && currentUser?.role === 'admin');
+
+  const color    = isOwnFixed ? 'var(--blue)' : adminAvatarColor(msg.sender_id);
+  const initials = isOwnFixed ? (currentUser.first_name?.[0] ?? 'M').toUpperCase() : (msg.first_name?.[0] ?? '?').toUpperCase();
+
+  const wrapClass   = isOwnFixed ? 'bubble-wrap own' : 'bubble-wrap';
+  const bubbleClass = isOwnFixed ? 'bubble own'       : 'bubble other';
+  // Pour les messages support, on affiche le vrai auteur (currentUser) pas "Support S.E.M.W.A"
+  const adminLabelName = msg.sent_by
+    ? (msg.sent_by === currentUser?.id
+        ? `${currentUser.first_name} ${currentUser.last_name}`
+        : `${msg.sent_by_first_name ?? ''} ${msg.sent_by_last_name ?? ''}`.trim() || displayName)
+    : displayName;
+  const adminLabel  = senderIsAdmin
+    ? `<div style="font-size:.65rem;color:var(--amber);font-weight:600;margin-bottom:2px;${isOwnFixed ? 'text-align:right' : ''}">🛡️ Admin · ${adminLabelName}</div>`
+    : '';
+
+  const div = document.createElement('div');
+  div.className = wrapClass;
+  div.innerHTML = `
+    <div class="bubble-avatar" style="background:${color}">${initials}</div>
+    <div>
+      ${adminLabel}
+      <div class="${bubbleClass}">${msg.content}</div>
+      <div class="bubble-time ${isOwnFixed ? '' : 'other'}">${time}</div>
+    </div>
+  `;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
 });
 
 /* ══════════════════════════════
@@ -47,9 +68,17 @@ async function checkSession() {
   try {
     const res = await fetch('/api/admin/users', { credentials: 'include' });
     if (res.ok) {
+      // Récupère le profil de l'admin connecté pour valoriser currentUser
+      const meRes  = await fetch('/api/auth/me', { credentials: 'include' });
+      const meData = await meRes.json();
+      currentUser  = meData.user ?? meData;
+
+      // Enregistre l'admin dans son salon Socket.io privé
+      socket.emit('register user', currentUser.id);
+
       hideAuthOverlay();
       await initDashboard();
-      startAutoRefresh(); // lance le rafraîchissement automatique
+      startAutoRefresh();
     } else {
       showAuthOverlay();
     }
@@ -137,6 +166,8 @@ async function doLogin() {
     }
 
     currentUser = data.user;
+    // Enregistre l'admin dans son salon Socket.io privé
+    socket.emit('register user', currentUser.id);
     hideAuthOverlay();
     await initDashboard();
     startAutoRefresh();
@@ -601,6 +632,7 @@ function renderAdminConvos(convos) {
     return `
       <div class="msg-thread"
            data-id="${c.conversation_id}"
+           data-title="${c.title ?? ''}"
            data-user1-id="${c.user1_id}"
            data-user1-name="${name1}"
            data-user2-id="${c.user2_id}"
@@ -610,6 +642,8 @@ function renderAdminConvos(convos) {
            data-init1="${init1}"
            data-init2="${init2}"
            onclick="selectAdminConvo(this)">
+
+ 
         <!-- Double avatar pour montrer les 2 interlocuteurs -->
         <div style="position:relative;width:40px;height:40px;flex-shrink:0">
           <div style="position:absolute;top:0;left:0;width:28px;height:28px;border-radius:8px;background:${color1};color:#fff;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">${init1}</div>
@@ -642,6 +676,7 @@ document.querySelectorAll('#admin-conversation-list .msg-thread')
 .forEach(t => t.classList.remove('active'));
 el.classList.add('active');
 const convoId   = el.dataset.id;
+const convoTitle = el.dataset.title;          // 'SUPPORT' ou vide
 const user1Id   = el.dataset.user1Id;
 const user1Name = el.dataset.user1Name;
 const user2Id   = el.dataset.user2Id;
@@ -650,21 +685,29 @@ const color1    = el.dataset.color1;
 const color2    = el.dataset.color2;
 const init1     = el.dataset.init1;
 const init2     = el.dataset.init2;
+
+// MODE SUPPORT : conversation créée par l'admin vers un user (title = 'SUPPORT')
+// MODE MODÉRATION : conversation privée entre deux users → lecture seule
+const isSupportConvo = convoTitle === 'SUPPORT';
+
 document.getElementById('admin-chat-title').textContent = `${user1Name} — ${user2Name}`;
-document.getElementById('admin-chat-sub').textContent   = 'Conversation privée · modération';
+document.getElementById('admin-chat-sub').textContent   = isSupportConvo
+  ? 'Ticket de support'
+  : 'Conversation privée · modération';
 document.getElementById('admin-msg-header').style.display = 'flex';
 document.getElementById('admin-no-convo').style.display   = 'none';
 document.getElementById('admin-msg-body').style.display   = 'flex';
-// Rejoindre la room Socket.io de cette conversation
+
+// Badge lecture seule : affiché sauf si c'est un ticket support
+document.getElementById('admin-readonly-badge').style.display = isSupportConvo ? 'none' : '';
+document.getElementById('admin-msg-input-row').style.display  = isSupportConvo ? 'flex' : 'none';
+
 socket.emit('join conversation', convoId);
-// L'admin fait-il partie de cette conversation ?
-const adminIsParticipant = (currentUser?.id === user1Id || currentUser?.id === user2Id);
-document.getElementById('admin-readonly-badge').style.display  = adminIsParticipant ? 'none'  : '';
-document.getElementById('admin-msg-input-row').style.display   = adminIsParticipant ? 'flex'  : 'none';
-// Stocke le receiverId pour l'envoi (l'autre participant)
-if (adminIsParticipant) {
-activeSupportConvoId  = convoId;
-activeSupportReceiver = (currentUser?.id === user1Id) ? user2Id : user1Id;
+
+// Stocke le contexte d'envoi uniquement pour les tickets support
+if (isSupportConvo) {
+  activeSupportConvoId  = convoId;
+  activeSupportReceiver = (currentUser?.id === user1Id) ? user2Id : user1Id;
 }
 const body = document.getElementById('admin-msg-body');
 body.innerHTML = '<p style="color:var(--slate4);font-size:.8rem">Chargement…</p>';
@@ -678,22 +721,37 @@ if (!messages.length) {
 }
 
 body.innerHTML = messages.map(msg => {
-  // Si l'expéditeur est l'admin connecté → bulle à droite
-  const isOwn    = msg.sender_id === currentUser?.id;
-  const isUser1  = msg.sender_id === user1Id;
-  const name     = isUser1 ? user1Name : user2Name;
-  const color    = isUser1 ? color1    : color2;
-  const initials = isUser1 ? init1     : init2;
-  const time     = adminFormatTime(msg.created_at);
+  // isOwn : soit c'est moi le vrai auteur (sent_by), soit je suis l'expéditeur direct
+  const isOwn = msg.sent_by !== null && msg.sent_by !== undefined
+    ? true
+    : msg.sender_id === currentUser?.id;
+
+  // Nom affiché : vrai auteur si sent_by existe, sinon nom de l'expéditeur (jointure BDD)
+  const authorName = msg.sent_by
+    ? `${msg.sent_by_first_name ?? ''} ${msg.sent_by_last_name ?? ''}`.trim() || 'Admin'
+    : `${msg.first_name ?? ''} ${msg.last_name ?? ''}`.trim() || 'Utilisateur';
+
+  const color    = isOwn ? 'var(--blue)' : adminAvatarColor(msg.sender_id);
+  const initials = isOwn
+    ? (currentUser.first_name?.[0] ?? 'M').toUpperCase()
+    : (msg.sent_by_first_name?.[0] ?? msg.first_name?.[0] ?? '?').toUpperCase();
+  const time = adminFormatTime(msg.created_at);
 
   const wrapClass   = isOwn ? 'bubble-wrap own' : 'bubble-wrap';
   const bubbleClass = isOwn ? 'bubble own'       : 'bubble other';
+
+  // Label admin avec le vrai nom de l'auteur
+  const senderIsAdmin = msg.role === 'admin';
+  const adminLabel    = senderIsAdmin
+    ? `<div style="font-size:.65rem;color:var(--amber);font-weight:600;margin-bottom:2px;${isOwn ? 'text-align:right' : ''}">🛡️ Admin · ${authorName}</div>`
+    : '';
 
   return `
     <div class="${wrapClass}">
       <div class="bubble-avatar" style="background:${color}">${initials}</div>
       <div>
-        <div style="font-size:.68rem;color:var(--slate4);margin-bottom:3px;${isOwn ? 'text-align:right' : ''}">${name}</div>
+        <div style="font-size:.68rem;color:var(--slate4);margin-bottom:3px;${isOwn ? 'text-align:right' : ''}">${authorName}</div>
+        ${adminLabel}
         <div class="${bubbleClass}">${msg.content}</div>
         <div class="bubble-time ${isOwn ? '' : 'other'}">${time}</div>
       </div>
@@ -701,9 +759,12 @@ body.innerHTML = messages.map(msg => {
   `;
 }).join('');
 
-body.scrollTop = body.scrollHeight;
+// S'assure que seul #admin-msg-body scrolle, pas la page entière
+const bodyEl = document.getElementById('admin-msg-body');
+if (bodyEl) bodyEl.scrollTop = bodyEl.scrollHeight;
 } catch {
-body.innerHTML = '<p style="color:#DC2626;font-size:.8rem">Erreur de chargement des messages.</p>';
+const bodyEl = document.getElementById('admin-msg-body');
+if (bodyEl) bodyEl.innerHTML = '<p style="color:#DC2626;font-size:.8rem">Erreur de chargement des messages.</p>';
 }
 }
 
@@ -758,21 +819,35 @@ if (!messages.length) {
 }
 
 body.innerHTML = messages.map(msg => {
-  // Même logique que partout : sender_id === admin → bulle à droite
-  const isOwn    = msg.sender_id === currentUser?.id;
-  const name     = isOwn ? 'Moi' : `${msg.first_name} (${msg.role})`;
+  const isOwn = msg.sent_by !== null && msg.sent_by !== undefined
+    ? true
+    : msg.sender_id === currentUser?.id;
+  // Nom du vrai auteur : sent_by_first_name si message support, sinon nom de l'expéditeur
+  const authorName = msg.sent_by
+    ? `${msg.sent_by_first_name ?? ''} ${msg.sent_by_last_name ?? ''}`.trim() || 'Admin'
+    : `${msg.first_name ?? ''} ${msg.last_name ?? ''}`.trim() || 'Utilisateur';
+  const name = authorName;
   const color    = isOwn ? 'var(--blue)' : adminAvatarColor(msg.sender_id);
-  const initials = isOwn ? (currentUser.first_name?.[0] ?? 'M').toUpperCase() : (msg.first_name?.[0] ?? '?').toUpperCase();
+  const initials = isOwn
+    ? (currentUser.first_name?.[0] ?? 'M').toUpperCase()
+    : (msg.first_name?.[0] ?? '?').toUpperCase();
   const time     = adminFormatTime(msg.created_at);
 
   const wrapClass   = isOwn ? 'bubble-wrap own' : 'bubble-wrap';
   const bubbleClass = isOwn ? 'bubble own'       : 'bubble other';
+
+  // Label admin : affiche le vrai auteur (sent_by) pas le compte support
+  const senderIsAdmin = msg.role === 'admin';
+  const adminLabel    = senderIsAdmin
+    ? `<div style="font-size:.65rem;color:var(--amber);font-weight:600;margin-bottom:2px;${isOwn ? 'text-align:right' : ''}">🛡️ Admin · ${name}</div>`
+    : '';
 
   return `
     <div class="${wrapClass}">
       <div class="bubble-avatar" style="background:${color}">${initials}</div>
       <div>
         <div style="font-size:.68rem;color:var(--slate4);margin-bottom:3px;${isOwn ? 'text-align:right' : ''}">${name}</div>
+        ${adminLabel}
         <div class="${bubbleClass}">${msg.content}</div>
         <div class="bubble-time ${isOwn ? '' : 'other'}">${time}</div>
       </div>
@@ -797,6 +872,7 @@ socket.emit('private message', {
   senderId:   currentUser.id,
   receiverId: activeSupportReceiver,
   content,
+  useSupport: true  // indique au serveur de substituer par le compte support
 });
 
 input.value = '';

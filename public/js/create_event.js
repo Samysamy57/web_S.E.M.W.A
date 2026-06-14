@@ -1,3 +1,68 @@
+// ─── MODE DÉTECTION (création vs édition) ──────────────────────────────────
+
+const urlParams = new URLSearchParams(window.location.search);
+const editId    = urlParams.get('edit'); // null si mode création
+
+if (editId) {
+  // Adapte les textes de l'interface pour le mode édition
+  const h1 = document.querySelector('h1');
+  if (h1) h1.textContent = 'Modify event';
+
+  const subtitle = document.querySelector('.page-subtitle, .page-description, h2, .subtitle, p.lead');
+  if (subtitle) subtitle.textContent = 'Fill in the details below to update your event';
+
+  document.getElementById('publish-btn').textContent = '💾 Save modifications';
+
+  // Charge les données de l'événement existant
+  (async () => {
+    try {
+      const res  = await fetch(`/api/events/${editId}`);
+      if (!res.ok) throw new Error('Failed to load event');
+      const ev = await res.json();
+
+      // Hydrate les champs textuels
+      document.getElementById('title').value           = ev.title        || '';
+      document.getElementById('category').value        = ev.category     || '';
+      document.getElementById('format').value          = ev.format       || '';
+      document.getElementById('description').value     = ev.description  || '';
+      document.getElementById('cover_image_url').value = ev.cover_image_url || '';
+      document.getElementById('location').value        = ev.location     || '';
+      document.getElementById('capacity').value        = ev.max_participants || '';
+
+      // Sépare les ISO timestamps en date + heure
+      if (ev.start_date) {
+        const [sd, st] = ev.start_date.substring(0, 16).split('T');
+        document.getElementById('start_date').value = sd || '';
+        document.getElementById('start_time').value = st || '';
+      }
+      if (ev.end_date) {
+        const [ed, et] = ev.end_date.substring(0, 16).split('T');
+        document.getElementById('end_date').value = ed || '';
+        document.getElementById('end_time').value = et || '';
+      }
+
+      // Reconstruit les lignes de tickets (supprime tout sauf le header)
+      const builder = document.getElementById('ticket-builder');
+      builder.querySelectorAll('.ticket-builder-row:not(.tb-header)').forEach(r => r.remove());
+
+      (ev.ticket_types || []).forEach(ticket => {
+        const row = document.createElement('div');
+        row.className = 'ticket-builder-row';
+        row.innerHTML = `
+          <div class="tb-cell"><input type="text"   class="t-name"  value="${ticket.name  || ''}"></div>
+          <div class="tb-cell"><input type="text"   class="t-desc"  value="${ticket.description || ''}"></div>
+          <div class="tb-cell"><input type="number" class="t-price" value="${ticket.price != null ? ticket.price : 0}" min="0"></div>
+          <div class="tb-cell"><button class="tb-del" onclick="deleteTicketRow(this)">✕</button></div>
+        `;
+        builder.appendChild(row);
+      });
+
+    } catch (err) {
+      console.error('[edit mode] Chargement événement échoué :', err);
+    }
+  })();
+}
+
 // ─── STEP NAVIGATION ───────────────────────────────────────────────────────
 
 // Affiche l'étape n et met à jour les indicateurs visuels
@@ -94,7 +159,6 @@ document.getElementById('publish-btn').addEventListener('click', async () => {
   const errorEl = document.getElementById('publish-error');
   errorEl.style.display = 'none';
 
-  // Combine date + heure pour former un timestamp ISO complet
   const startDate = document.getElementById('start_date').value;
   const startTime = document.getElementById('start_time').value || '00:00';
   const endDate   = document.getElementById('end_date').value;
@@ -110,26 +174,30 @@ document.getElementById('publish-btn').addEventListener('click', async () => {
     end_date:        endDate   ? `${endDate}T${endTime}`     : null,
     location:        document.getElementById('location').value.trim(),
     capacity:        parseInt(document.getElementById('capacity').value) || null,
-    cover_image_url: imageUrl || null,   // null si champ vide
+    cover_image_url: imageUrl || null,
     tickets:         collectTickets(),
   };
 
-  // Validation basique côté client
   if (!payload.title || !payload.start_date) {
     errorEl.textContent = 'Please fill in the event title and start date.';
     errorEl.style.display = 'block';
     return;
   }
 
+  const btn = document.getElementById('publish-btn');
   try {
-    document.getElementById('publish-btn').disabled = true;
-    document.getElementById('publish-btn').textContent = 'Publishing…';
+    btn.disabled = true;
+    btn.textContent = editId ? 'Saving…' : 'Publishing…';
 
-    const res = await fetch('/api/events', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
-    });
+    // Mode édition → PUT, mode création → POST
+    const res = await fetch(
+      editId ? `/api/events/${editId}` : '/api/events',
+      {
+        method:  editId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      }
+    );
 
     const data = await res.json();
 
@@ -139,15 +207,16 @@ document.getElementById('publish-btn').addEventListener('click', async () => {
       return;
     }
 
-    // Succès → redirige vers le dashboard
-    window.location.href = '/dashboard';
+    // Succès → toast + redirection
+    showToast(editId ? 'Event updated!' : 'Event published!');
+    setTimeout(() => { window.location.href = '/dashboard'; }, 800);
 
   } catch (err) {
     errorEl.textContent = 'Network error. Please try again.';
     errorEl.style.display = 'block';
   } finally {
-    document.getElementById('publish-btn').disabled = false;
-    document.getElementById('publish-btn').textContent = '🚀 Publish event';
+    btn.disabled = false;
+    btn.textContent = editId ? '💾 Save modifications' : '🚀 Publish event';
   }
 });
 
@@ -167,11 +236,16 @@ function showToast(msg) {
 (async () => {
   try {
     const res  = await fetch('/api/auth/me');
+    if (!res.ok) return;
     const data = await res.json();
-    if (data?.username) {
-      document.getElementById('nav-username').textContent = data.username;
-      document.getElementById('nav-avatar').textContent =
-        (data.first_name?.[0] || '') + (data.last_name?.[0] || '');
-    }
+
+    // Attend que global-notifications.js ait fini de s'initialiser
+    setTimeout(() => {
+      const navUsername = document.getElementById('nav-username');
+      const navAvatar   = document.getElementById('nav-avatar');
+      if (navUsername) navUsername.textContent = data.username || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'User';
+      if (navAvatar)   navAvatar.textContent   = (data.first_name?.[0] || '') + (data.last_name?.[0] || '?');
+    }, 0);
+
   } catch (_) { /* silencieux si non connecté */ }
 })();

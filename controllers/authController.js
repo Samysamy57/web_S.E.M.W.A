@@ -111,6 +111,19 @@ export function logout(_req, res) {
 }
 
 export function me(req, res) {
-  const { id, first_name, last_name, email, role, avatar_url } = req.user;
-  return res.status(200).json({ id, first_name, last_name, email, role, avatar_url });
+  const { id, first_name, last_name, email, role, avatar_url, bio } = req.user;
+  return res.status(200).json({ id, first_name, last_name, email, role, avatar_url, bio });
+}
+
+export async function updateProfile(req, res) {
+  const { firstName, lastName, avatarUrl, bio } = req.body;
+
+  if (!firstName?.trim() || !lastName?.trim()) {
+    return res.status(400).json({ error: 'First name and last name are required.' });
+  }
+
+  const updated = await User.updateUserProfile(req.user.id, { firstName, lastName, avatarUrl, bio });
+  if (!updated) return res.status(404).json({ error: 'User not found.' });
+
+  return res.status(200).json(updated);
 }

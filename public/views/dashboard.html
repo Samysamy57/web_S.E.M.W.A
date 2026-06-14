@@ -184,6 +184,55 @@
   </div>
 </div>
 
+<!-- Modal : Diffusion d'annonce -->
+<div class="modal-overlay" id="modal-notify-participants">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-notify-participants')">✕</button>
+    <h2>Send Announcement</h2>
+    <p id="notify-modal-subtitle">Broadcast a message to all registered participants.</p>
+    <textarea id="announce-content"
+      placeholder="Write your announcement here…"
+      style="width:100%;height:120px;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;outline:none;resize:vertical;margin-bottom:14px"></textarea>
+    <label style="display:flex;align-items:center;gap:10px;font-size:.84rem;font-weight:600;color:var(--slate2);margin-bottom:20px;cursor:pointer">
+      <input type="checkbox" id="announce-notify-future" style="width:16px;height:16px;accent-color:var(--blue)">
+      Also display this update to future registered participants on the event page
+    </label>
+    <div style="display:flex;gap:10px">
+      <button class="btn-ghost" onclick="closeModal('modal-notify-participants')">Cancel</button>
+      <button id="btn-send-announcement"
+        style="flex:1;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">
+        📢 Send Announcement
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal : Historique d'un participant -->
+<div class="modal-overlay" id="modal-attendee-history">
+  <div class="modal" style="max-width:680px">
+    <button class="modal-close" onclick="closeModal('modal-attendee-history')">✕</button>
+    <h2 id="attendee-history-title">Attendee History</h2>
+    <p id="attendee-history-contact">—</p>
+    <div style="overflow-x:auto">
+      <table class="attendees-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Ticket Type</th>
+            <th>Price</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="attendee-history-tbody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn-ghost" onclick="closeModal('modal-attendee-history')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="dash-layout">
   <!-- ─── SIDEBAR ─── -->
   <aside class="sidebar">
@@ -205,19 +254,16 @@
         <div class="sb-item active" onclick="showSection('section-dashboard')">📊 <span>Dashboard</span></div>
         <div class="sb-item" onclick="showSection('section-my-events')">🗓 <span>My Events</span><span class="sb-count" id="sb-events-count">–</span></div>
         <div class="sb-item" onclick="showSection('section-tickets')">🎫 <span>Tickets</span></div>
-        <div class="sb-item" onclick="showSection('section-attendees-wip')">👥 <span>Attendees</span></div>
+        <div class="sb-item" onclick="showSection('section-attendees')">👥 <span>Attendees</span></div>
       </div>
 
       <div class="sidebar-section" style="margin-top:14px">
         <div class="sidebar-label">Communication</div>
-        <div class="sb-item" onclick="showSection('section-messages')">✉️ <span>Messages</span></div>
-        <div class="sb-item" onclick="showSection('section-notifications')">🔔 <span>Notifications</span></div>
+        <div class="sb-item" onclick="showSection('section-messages')">✉️ <span>Messages</span><span class="sb-count alert" id="sb-messages-unread-count" style="display:none">0</span></div>
+        <div class="sb-item" onclick="showSection('section-notifications')">🔔 <span>Notifications</span><span class="sb-count" id="sb-notifications-unread-count" style="display:none">0</span></div>
       </div>
 
-      <div class="sidebar-section" style="margin-top:14px">
-        <div class="sidebar-label">Analytics</div>
-        <div class="sb-item" onclick="showSection('section-reports')">📈 <span>Reports</span></div>
-      </div>
+      
 
     </div><!-- /sidebar-nav -->
 
@@ -328,17 +374,20 @@
         </div>
       </div>
 
-      <!-- Grid : liste events + colonne droite -->
+      <!-- Vue normale : grid avec aperçu events + widget weekly -->
+    <div id="my-events-normal-view">
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">My Events <a href="#">Manage all →</a></div>
+          <div class="card-title">
+            My Events
+            <a href="#" id="link-toggle-manage-all" onclick="toggleManageAllMode(event)">Manage all →</a>
+          </div>
           <div id="events-list">
             <p style="font-size:.82rem;color:var(--slate3)">Loading events…</p>
           </div>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:18px">
-          <!-- Chart CSS : inscriptions hebdomadaires -->
           <div class="card">
             <div class="card-title">Weekly Registrations</div>
             <div class="chart-bars">
@@ -353,6 +402,45 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Vue "Manage all" : plein écran, masquée par défaut -->
+    <div id="my-events-manage-view" style="display:none">
+      <button class="back-btn" onclick="toggleManageAllMode(event)">← Back to overview</button>
+
+      <div class="card">
+        <div class="card-title">All My Events</div>
+
+        <!-- Barre de recherche + suggestions -->
+        <div id="manage-all-search-wrap" style="margin-bottom:18px;position:relative;">
+          <div style="display:flex;align-items:center;border:1px solid var(--border);border-radius:9px;overflow:visible;">
+            <input type="text" id="manage-all-search-input"
+              placeholder="🔍 Search by title, city or status…"
+              style="padding:11px 16px;border:none;outline:none;width:100%;
+                     font-family:'Plus Jakarta Sans',sans-serif;font-size:.83rem;background:transparent;"
+              autocomplete="off">
+          </div>
+          <div id="search-suggestions"
+               style="display:none;position:absolute;width:100%;top:100%;left:0;
+                      box-shadow:var(--shadow-lg);border:1px solid var(--border);
+                      border-radius:9px;background:#fff;z-index:1000;
+                      max-height:200px;overflow-y:auto;">
+          </div>
+        </div>
+
+        <div id="events-list-manage">
+          <p style="font-size:.82rem;color:var(--slate3)">Loading…</p>
+        </div>
+
+        <!-- Pagination -->
+        <div id="my-events-pagination"
+             style="display:none;justify-content:center;align-items:center;gap:12px;margin-top:18px;">
+          <button class="btn-secondary" id="btn-pagination-prev" style="padding:6px 12px;">← Previous</button>
+          <span id="pagination-info" style="font-size:.8rem;font-weight:600;color:var(--slate3)">Page 1 of 1</span>
+          <button class="btn-secondary" id="btn-pagination-next" style="padding:6px 12px;">Next →</button>
+        </div>
+      </div>
+    </div>
     </div><!-- /section-my-events -->
 
 
@@ -443,26 +531,145 @@
 
     <!-- ═══ SECTIONS "EN CONSTRUCTION" ═══ -->
     <div id="section-tickets" class="dash-section section-hidden">
-      <div class="wip-section">
-        <div class="wip-icon">🚧</div>
-        <h2>Tickets</h2>
-        <p>This section is under construction. Check back soon!</p>
-      </div>
-    </div>
 
-    <div id="section-attendees-wip" class="dash-section section-hidden">
-      <div class="wip-section">
-        <div class="wip-icon">🚧</div>
-        <h2>Attendees</h2>
-        <p>Global attendees management coming soon.</p>
+      <div class="dash-header">
+        <div>
+          <h1 style="font-family:'Fraunces',serif;font-size:1.6rem">Tickets Management</h1>
+          <p style="color:var(--slate3);font-size:.83rem;margin-top:2px">Track sales, monitor revenues, and validate check-ins</p>
+        </div>
       </div>
-    </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--blue-l)">🎫</div>
+            <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Total</span>
+          </div>
+          <div class="kpi-num" id="kpi-tickets-sold">0</div>
+          <div class="kpi-lbl">Total sold</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--green-l)">✅</div>
+            <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Validated</span>
+          </div>
+          <div class="kpi-num" id="kpi-tickets-checkedin">0</div>
+          <div class="kpi-lbl">Checked-in</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:var(--red-l)">✕</div>
+            <span class="kpi-delta" style="background:#FEF2F2;color:#DC2626">Cancelled</span>
+          </div>
+          <div class="kpi-num" id="kpi-tickets-cancelled">0</div>
+          <div class="kpi-lbl">Cancelled</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:#F0FDF4">💰</div>
+            <span class="kpi-delta" style="background:#DCFCE7;color:#16A34A">Revenue</span>
+          </div>
+          <div class="kpi-num" id="kpi-tickets-revenue">0€</div>
+          <div class="kpi-lbl">Ticket revenue</div>
+        </div>
+      </div>
+
+      <!-- Barre de recherche + filtre -->
+      <div class="card" style="margin-bottom:18px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <input type="text" id="tickets-search-input"
+                 placeholder="🔍 Search by attendee, email or event…"
+                 style="flex:1;min-width:220px;padding:11px 16px;border:1px solid var(--border);border-radius:9px;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.83rem">
+          <select id="tickets-event-filter"
+                  style="padding:11px 16px;border:1px solid var(--border);border-radius:9px;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.83rem;background:#fff">
+            <option value="all">All events</option>
+          </select>
+          <select id="tickets-status-filter"
+                  style="padding:11px 16px;border:1px solid var(--border);border-radius:9px;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.83rem;background:#fff">
+            <option value="all">All statuses</option>
+            <option value="registered">Registered</option>
+            <option value="attended">Attended</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tableau des tickets -->
+      <div class="card">
+        <div class="card-title">All Tickets</div>
+        <div style="overflow-x:auto">
+          <table class="attendees-table">
+            <thead>
+              <tr>
+                <th>Attendee</th>
+                <th>Event</th>
+                <th>Ticket Type</th>
+                <th>Price</th>
+                <th>Purchase Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tickets-tbody">
+              <tr><td colspan="7" style="padding:16px;color:var(--slate3)">Loading tickets…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /section-tickets -->
+
+    <div id="section-attendees" class="dash-section section-hidden">
+
+      <div class="dash-header">
+        <div>
+          <h1 style="font-family:'Fraunces',serif;font-size:1.6rem">Global Attendees Management</h1>
+          <p style="color:var(--slate3);font-size:.83rem;margin-top:2px">View participant profiles, purchase histories, and establish direct contact</p>
+        </div>
+      </div>
+
+      <!-- Barre de recherche -->
+      <div class="card" style="margin-bottom:18px">
+        <input type="text" id="attendees-search-input"
+               placeholder="🔍 Search by name or email…"
+               style="width:100%;padding:11px 16px;border:1px solid var(--border);border-radius:9px;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.83rem">
+      </div>
+
+      <!-- Tableau des participants -->
+      <div class="card">
+        <div class="card-title">All Attendees</div>
+        <div style="overflow-x:auto">
+          <table class="attendees-table">
+            <thead>
+              <tr>
+                <th>Attendee</th>
+                <th>Total Bookings</th>
+                <th>Presence Rate</th>
+                <th>Total Spent</th>
+                <th>Last Registration</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="attendees-tbody-global">
+              <tr><td colspan="6" style="padding:16px;color:var(--slate3)">Loading attendees…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /section-attendees -->
 
     <div id="section-notifications" class="dash-section section-hidden">
-      <div class="wip-section">
-        <div class="wip-icon">🚧</div>
-        <h2>Notifications</h2>
-        <p>Notification center coming soon.</p>
+      <div class="dash-header">
+        <div>
+          <h1 style="font-family:'Fraunces',serif;font-size:1.6rem">Notification Center</h1>
+          <p style="color:var(--slate3);font-size:.83rem;margin-top:2px">Your latest registrations and reviews</p>
+        </div>
+        <button class="btn-secondary" id="btn-notifications-read-all">✓ Mark all as read</button>
+      </div>
+      <div class="card" id="notifications-list-container">
+        <p style="font-size:.82rem;color:var(--slate3)">Loading notifications…</p>
       </div>
     </div>
 
@@ -538,7 +745,9 @@
 </div>
 
 <!-- Socket.io + scripts -->
+<link rel="stylesheet" href="/css/notifications.css">
 <script src="/socket.io/socket.io.js"></script>
+<script src="/js/global-notifications.js"></script>
 <script src="/js/dashboard.js"></script>
 </body>
 </html>

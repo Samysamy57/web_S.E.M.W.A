@@ -182,45 +182,169 @@ async function fetchEvents() {
   }
 }
 
+// ─── VARIABLES D'ÉTAT MODAL ───────────────────────────
+let currentEventData  = null; // données de l'event sélectionné
+let currentUser       = null; // données de l'utilisateur connecté
+
+// Charge les infos de l'utilisateur une seule fois au démarrage
+async function loadCurrentUser() {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    if (res.ok) currentUser = await res.json();
+  } catch (_) {}
+}
+
+// Génère un bloc formulaire nominatif pour un ticket
+function buildHolderForm(index, user) {
+  const isFirst   = index === 0;
+  const firstName = isFirst && user ? user.first_name : '';
+  const lastName  = isFirst && user ? user.last_name  : '';
+  const email     = isFirst && user ? user.email      : '';
+
+  return `
+    <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="font-size:.78rem;font-weight:700;color:var(--slate3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">
+        Ticket ${index + 1}
+      </div>
+      <div class="form-row" style="margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label>First name *</label>
+          <input type="text" class="holder-firstname" value="${firstName}" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Last name *</label>
+          <input type="text" class="holder-lastname" value="${lastName}" required>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Email *</label>
+        <input type="email" class="holder-email" value="${email}" required>
+      </div>
+    </div>`;
+}
+
+// Met à jour les formulaires selon la quantité choisie
+function updateHolderForms() {
+  const qty       = parseInt(document.getElementById('ticket-qty').value) || 1;
+  const container = document.getElementById('ticket-holders-container');
+  container.innerHTML = '';
+  for (let i = 0; i < qty; i++) {
+    container.innerHTML += buildHolderForm(i, currentUser);
+  }
+}
+
 // ─── MODAL RÉSERVATION ────────────────────────────────
-function openBookModal(eventId, eventTitle) {
+async function openBookModal(eventId, eventTitle) {
   selectedEventId = eventId;
+
+  // Reset des étapes
+  document.getElementById('booking-step-1').style.display = 'block';
+  document.getElementById('booking-step-2').style.display = 'none';
   document.getElementById('modal-event-title').textContent = eventTitle;
-  document.getElementById('btn-confirm-book').disabled = false;
-  document.getElementById('btn-confirm-book').textContent = 'Confirm booking →';
+  document.getElementById('ticket-qty').value = 1;
+
+  // Charge les types de tickets de cet event
+  try {
+    const res  = await fetch(`/api/events/${eventId}`, { credentials: 'include' });
+    const data = await res.json();
+    currentEventData = data;
+
+    const container = document.getElementById('ticket-types-booking');
+    const tickets   = Array.isArray(data.ticket_types) ? data.ticket_types : [];
+    container.innerHTML = tickets.map((t, i) => `
+      <div class="ticket-type ${i === 0 ? 'selected' : ''}"
+           data-ticket-id="${t.id}" data-price="${t.price}"
+           onclick="document.querySelectorAll('#ticket-types-booking .ticket-type').forEach(x=>x.classList.remove('selected'));this.classList.add('selected')">
+        <div>
+          <div class="ticket-name">${t.name}</div>
+          ${t.description ? `<div class="ticket-desc">${t.description}</div>` : ''}
+        </div>
+        <div class="ticket-price">${parseFloat(t.price) === 0 ? 'Free' : '€' + parseFloat(t.price).toFixed(0)}</div>
+      </div>`).join('') || '<p style="color:var(--slate3);font-size:.85rem">No ticket types available.</p>';
+
+  } catch (_) { currentEventData = null; }
+
+  // Génère le 1er formulaire pré-rempli
+  updateHolderForms();
+
+  const btn = document.getElementById('btn-confirm-book');
+  btn.disabled    = false;
+  btn.textContent = 'Confirm booking →';
+
   document.getElementById('modal-book').classList.add('open');
 }
 
 function closeBookModal() {
   document.getElementById('modal-book').classList.remove('open');
-  selectedEventId = null;
+  selectedEventId  = null;
+  currentEventData = null;
 }
 
 // Envoi de la réservation à l'API
 async function confirmBooking() {
   if (!selectedEventId) return;
 
+  // Collecte le ticket type sélectionné
+  const selectedTicketEl = document.querySelector('#ticket-types-booking .ticket-type.selected');
+  const ticketTypeId     = selectedTicketEl?.dataset.ticketId || null;
+
+  // Collecte les données nominatives
+  const firstNames = [...document.querySelectorAll('.holder-firstname')].map(i => i.value.trim());
+  const lastNames  = [...document.querySelectorAll('.holder-lastname')].map(i => i.value.trim());
+  const emails     = [...document.querySelectorAll('.holder-email')].map(i => i.value.trim());
+
+  // Validation simple
+  if (firstNames.some(v => !v) || lastNames.some(v => !v) || emails.some(v => !v)) {
+    showToast('Please fill in all attendee fields.', true);
+    return;
+  }
+
+  const tickets = firstNames.map((fn, i) => ({
+    holder_first_name: fn,
+    holder_last_name:  lastNames[i],
+    holder_email:      emails[i],
+  }));
+
   const btn = document.getElementById('btn-confirm-book');
-  btn.disabled = true;
-  btn.textContent = 'Booking…';
+  btn.disabled    = true;
+  btn.textContent = 'Processing…';
 
   try {
     const res = await fetch('/api/events/book', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ eventId: selectedEventId }),
+      body: JSON.stringify({ eventId: selectedEventId, ticketTypeId, tickets }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Booking failed.');
 
-    closeBookModal();
-    showToast('Ticket booked! Confirmation sent.');
-    // Rafraîchit la liste pour mettre à jour les compteurs
-    fetchEvents();
+    if (data.type === 'paid') {
+      // Redirige vers Stripe Checkout
+      window.location.href = data.stripeUrl;
+    } else {
+      // Gratuit : affiche les QR codes directement
+      document.getElementById('booking-step-1').style.display = 'none';
+      document.getElementById('booking-step-2').style.display = 'block';
+
+      const zone = document.getElementById('booking-success-zone');
+      zone.innerHTML = data.tickets.map(t => `
+        <div style="border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;text-align:center">
+          <div style="font-weight:700;font-size:.9rem;margin-bottom:4px">
+            ${t.holder_first_name} ${t.holder_last_name}
+          </div>
+          <div style="font-size:.75rem;color:var(--slate3);margin-bottom:12px">${t.holder_email}</div>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${t.qr_code_secret}"
+               alt="QR Code" style="border-radius:8px">
+          <div style="font-size:.7rem;color:var(--slate4);margin-top:8px">Ticket ID: ${t.id}</div>
+        </div>`).join('');
+
+      showToast('Tickets booked successfully!');
+      fetchEvents(); // met à jour les compteurs
+    }
   } catch (err) {
     showToast(err.message, true);
-    btn.disabled = false;
+    btn.disabled    = false;
     btn.textContent = 'Confirm booking →';
   }
 }
@@ -250,6 +374,7 @@ document.querySelectorAll('.chip').forEach(chip => {
 
 // Fermeture modale
 document.getElementById('modal-close-btn').addEventListener('click', closeBookModal);
+document.getElementById('ticket-qty')?.addEventListener('input', updateHolderForms);
 document.getElementById('modal-book').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeBookModal();
 });
@@ -262,4 +387,11 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 });
 
 // ─── INIT ─────────────────────────────────────────────
+loadCurrentUser();
 fetchEvents();
+
+// Gestion du retour depuis Stripe (booking=success ou booking=cancelled)
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('booking') === 'cancelled') {
+  showToast('Payment cancelled. No charge was made.', true);
+}

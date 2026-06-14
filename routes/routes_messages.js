@@ -2,8 +2,15 @@ import express from 'express';
 import { requireAuth } from '../middlewares/auth.js';
 import Conversation from '../models/ConversationModel.js';
 import Message from '../models/messageModel.js';
+import { getUnreadNotifications, markConversationAsRead } from '../controllers/messageController.js';
 
 const router = express.Router();
+
+// Notifications : messages non lus
+router.get('/unread', requireAuth, getUnreadNotifications);
+
+// Marquer une conversation comme lue
+router.post('/conversation/:id/read', requireAuth, markConversationAsRead);
 
 // user connecté
 router.get('/', requireAuth, async (req, res) => {
@@ -52,6 +59,11 @@ router.post('/create', requireAuth, async (req, res) => {
 
     if (!userId || !receiverId) {
       return res.status(400).json({ error: 'userId ou receiverId manquant' });
+    }
+
+    // Empêche de créer une conversation avec soi-même
+    if (userId === receiverId) {
+      return res.status(400).json({ error: 'You cannot start a conversation with yourself.' });
     }
 
     const conversation = await Conversation.getOrCreatePrivateConversation(userId, receiverId);

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import http from 'http';
 import { Server } from 'socket.io';
 
+import pool from './config/db.js';
 import initSocket from './socketserv.js';
 import authRoutes from './routes/authRoutes.js';
 import { requireAuth } from './middlewares/authMiddleware.js';
@@ -14,6 +15,7 @@ import messageRoutes from './routes/routes_messages.js';
 import searchRoutes from './routes/routes_search.js';
 import eventRoutes     from './routes/eventRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import ticketRoutes from './routes/ticketRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -30,6 +32,19 @@ const io = new Server(server, {
 });
 initSocket(io);
 
+// Résout l'UUID du compte support une seule fois au démarrage
+global.supportUserId = null;
+pool.query(`SELECT id FROM users WHERE email = 'support@semwa.app' LIMIT 1`)
+  .then(({ rows }) => {
+    if (!rows[0]) {
+      console.error('[SUPPORT] Compte support introuvable ! Créez-le en BDD.');
+      return;
+    }
+    global.supportUserId = rows[0].id;
+    console.log(`[SUPPORT] Compte résolu : ${global.supportUserId}`);
+  })
+  .catch(err => console.error('[SUPPORT] Erreur résolution compte support:', err));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -42,6 +57,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/search',   searchRoutes);
 app.use('/api/events',    eventRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/tickets', ticketRoutes);
 
 // Pages HTML
 app.get('/', (_req, res) => {
@@ -73,6 +89,12 @@ app.get('/create-event', requireAuth, (_req, res) => {
 });
 app.get('/event-detail', requireAuth, (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'views', 'event_detail.html'));
+});
+app.get('/my-tickets', requireAuth, (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'my_tickets.html'));
+});
+app.get('/profile', requireAuth, (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'views', 'profile.html'));
 });
 
 // 404

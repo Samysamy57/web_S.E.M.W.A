@@ -42,6 +42,7 @@ const Conversation = {
         `
         INSERT INTO conversation_participants (conversation_id, user_id)
         VALUES ($1, $2), ($1, $3)
+        ON CONFLICT (conversation_id, user_id) DO NOTHING
         `,
         [conversation.id, userId1, userId2]
       );
@@ -112,6 +113,7 @@ const Conversation = {
       `
       SELECT
         c.id                        AS conversation_id,
+        c.title,
         c.is_group,
         c.created_at,
         c.updated_at,
@@ -183,7 +185,10 @@ const Conversation = {
         m.id AS last_message_id,
         m.content AS last_message,
         m.created_at AS last_message_created_at,
-        m.sender_id AS last_message_sender_id
+        m.sender_id AS last_message_sender_id,
+
+        -- last_read_at de l'utilisateur connecté pour cette conversation
+        cp_me.last_read_at
 
       FROM conversations c
 
@@ -212,6 +217,41 @@ const Conversation = {
     );
 
     return rows;
+  },
+
+  // Retourne les conversations avec des messages non lus pour userId
+  async getUnreadNotifications(userId) {
+    const { rows } = await pool.query(
+      `
+      SELECT DISTINCT ON (c.id)
+        c.id                  AS conversation_id,
+        m.content             AS last_message,
+        m.created_at          AS message_at,
+        u.first_name          AS sender_first_name,
+        u.last_name           AS sender_last_name
+      FROM conversations c
+      JOIN conversation_participants cp
+        ON cp.conversation_id = c.id AND cp.user_id = $1
+      JOIN messages m
+        ON m.conversation_id = c.id
+       AND m.sender_id <> $1
+       AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at)
+      JOIN users u ON u.id = m.sender_id
+      ORDER BY c.id, m.created_at DESC
+      `,
+      [userId]
+    );
+    return rows;
+  },
+
+  // Met à jour last_read_at = NOW() pour marquer une conversation comme lue
+  async markAsRead(conversationId, userId) {
+    await pool.query(
+      `UPDATE conversation_participants
+       SET last_read_at = NOW()
+       WHERE conversation_id = $1 AND user_id = $2`,
+      [conversationId, userId]
+    );
   }
 };
 

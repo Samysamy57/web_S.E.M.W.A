@@ -1,4 +1,5 @@
 // C:\Users\samyb\StudioProjects\web_S.E.M.W.A\controllers\adminController.js
+import pool from '../config/db.js';
 import User from '../models/User.js';
 import AdminRequest from '../models/AdminRequestModel.js';
 import Event from '../models/EventModel.js';
@@ -91,19 +92,41 @@ export async function handleAdminRequest(req, res) {
 export async function openSupportConversation(req, res) {
   const { userId } = req.params;
   const conversation = await Conversation.getOrCreateSupportConversation(userId);
+
+  // Ajoute le compte support comme participant pour qu'il puisse envoyer des messages
+  if (global.supportUserId) {
+    await pool.query(
+      `INSERT INTO conversation_participants (conversation_id, user_id)
+       VALUES ($1, $2)
+       ON CONFLICT (conversation_id, user_id) DO NOTHING`,
+      [conversation.id, global.supportUserId]
+    );
+  }
+
   return res.status(200).json({ conversationId: conversation.id });
 }
 
 // POST /api/admin/messages/send
 export async function sendAdminMessage(req, res) {
   const { conversationId, content } = req.body;
-  const senderId = req.user.id;
+  const realAdminId = req.user.id;
 
   if (!conversationId || !content) {
     return res.status(400).json({ error: 'conversationId and content are required.' });
   }
 
-  const message = await Message.create({ conversationId, senderId, content, messageType: 'text' });
+  if (!global.supportUserId) {
+    return res.status(500).json({ error: 'Compte support non configuré.' });
+  }
+
+  const message = await Message.create({
+    conversationId,
+    senderId:    global.supportUserId, // expéditeur visible = Support S.E.M.W.A
+    content,
+    messageType: 'text',
+    sentBy:      realAdminId           // vrai auteur tracé en BDD
+  });
+
   return res.status(201).json({ message });
 }
 

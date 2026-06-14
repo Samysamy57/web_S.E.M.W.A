@@ -17,4 +17,17 @@ router.get('/events/:id/attendees', dashboardController.getEventAttendees);
 // Annulation d'un event
 router.patch('/events/:id/cancel',  dashboardController.cancelEvent);
 
+// Notifications
+router.get('/notifications',          dashboardController.getNotifications);
+router.post('/notifications/read-all', dashboardController.markNotificationsAsRead);
+
+router.get('/tickets',           dashboardController.getTickets);
+router.patch('/tickets/:id/status', dashboardController.updateTicketStatus);
+
+router.post('/events/:id/announce', dashboardController.broadcastAnnouncement);
+
+// Participants globaux de l'organisateur
+router.get('/attendees',                dashboardController.getGlobalAttendees);
+router.get('/attendees/:userId/history', dashboardController.getAttendeeHistory);
+
 export default router;

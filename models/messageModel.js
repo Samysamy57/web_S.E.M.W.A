@@ -2,31 +2,27 @@
 import pool from '../config/db.js';
 
 const Message = {
-  async create({ conversationId, senderId, content, messageType = 'text' }) {
-    const { rows } = await pool.query(
-      `
-      INSERT INTO messages (conversation_id, sender_id, content, message_type)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *
-      `,
-      [conversationId, senderId, content, messageType]
-    );
-
-    return rows[0];
-  },
+  // sentBy = vrai auteur admin (optionnel, pour le panel admin)
+async create({ conversationId, senderId, content, messageType = 'text', sentBy = null }) {
+  const { rows } = await pool.query(
+    `INSERT INTO messages (conversation_id, sender_id, content, message_type, sent_by)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [conversationId, senderId, content, messageType, sentBy]
+  );
+  return rows[0];
+},
 
   async getByConversationId(conversationId) {
     const { rows } = await pool.query(
-      `
-      SELECT
-        m.id, m.conversation_id, m.sender_id,
-        m.content, m.message_type, m.created_at, m.updated_at,
-        u.role, u.first_name, u.last_name
-      FROM messages m
-      JOIN users u ON u.id = m.sender_id
-      WHERE m.conversation_id = $1
-      ORDER BY m.created_at ASC
-      `,
+      `SELECT m.*,
+              u.first_name, u.last_name, u.role,
+              a.first_name AS sent_by_first_name,
+              a.last_name  AS sent_by_last_name
+       FROM messages m
+       JOIN users u ON u.id = m.sender_id
+       LEFT JOIN users a ON a.id = m.sent_by
+       WHERE m.conversation_id = $1
+       ORDER BY m.created_at ASC`,
       [conversationId]
     );
     return rows;

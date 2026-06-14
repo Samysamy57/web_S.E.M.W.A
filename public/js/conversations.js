@@ -241,6 +241,17 @@ async function init() {
   showChatZone(false);
   await loadCurrentUser();
   await loadConversations();
+
+  // Si redirigé depuis la cloche, ouvre directement la conversation ciblée
+  const params = new URLSearchParams(window.location.search);
+  const targetConvoId = params.get('convoId');
+  if (targetConvoId) {
+    // Cherche le card dans la liste et l'ouvre
+    const card = document.querySelector(`.msg-thread[data-id="${targetConvoId}"]`);
+    if (card) {
+      selectConversation(targetConvoId, card.dataset.otherUserId);
+    }
+  }
 }
 
 init();
