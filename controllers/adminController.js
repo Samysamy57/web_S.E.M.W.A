@@ -64,10 +64,16 @@ export async function moderateEvent(req, res) {
     return res.status(400).json({ error: `status must be one of: ${ALLOWED.join(', ')}.` });
   }
 
-  const event = await Event.updateStatus(id, status);
+  // Traduit 'approved' → 'published' car c'est la valeur réelle de l'enum en BDD
+  const dbStatus = status === 'approved' ? 'published' : status;
+
+  const event = await Event.updateStatus(id, dbStatus);
   if (!event) return res.status(404).json({ error: 'Event not found.' });
 
-  return res.status(200).json({ event });
+  // Renvoie le statut "lisible" au frontend ('approved' au lieu de 'published')
+  return res.status(200).json({
+    event: { ...event, status: status === 'approved' ? 'approved' : event.status }
+  });
 }
 
 

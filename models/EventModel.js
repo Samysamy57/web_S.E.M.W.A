@@ -4,7 +4,11 @@ const Event = {
 async findEvent(filter) {
   const { keyword, city, date, category } = filter;
 
-  const conditions = [`e.status = 'published'`];
+  // Exclut les événements passés : si end_date existe on s'en sert, sinon start_date
+  const conditions = [
+    `e.status = 'published'`,
+    `COALESCE(e.end_date, e.start_date) >= NOW()`,
+  ];
   const values = [];
   let index = 1;
 
@@ -202,7 +206,7 @@ async bookEvent(eventId, userId) {
   async getOrganizerEvents(userId) {
     const { rows } = await pool.query(
       `SELECT
-         e.id, e.title, e.status, e.start_date, e.city,
+         e.id, e.title, e.status, e.start_date, e.end_date, e.city,
          e.max_participants, e.price,
          COUNT(ep.id) FILTER (WHERE ep.status = 'registered') AS registered_count
        FROM events e
@@ -213,12 +217,20 @@ async bookEvent(eventId, userId) {
       [userId]
     );
 
-    return rows.map(ev => ({
-      ...ev,
-      fill_pct: ev.max_participants
-        ? Math.round((ev.registered_count / ev.max_participants) * 100)
-        : null,
-    }));
+    return rows.map(ev => {
+      // Calcule si l'événement est passé (on utilise end_date si dispo, sinon start_date)
+      const refDate  = ev.end_date || ev.start_date;
+      const isPassed = refDate && new Date(refDate) < new Date();
+
+      return {
+        ...ev,
+        // Statut virtuel : 'published' + date passée → 'completed'
+        status: ev.status === 'published' && isPassed ? 'completed' : ev.status,
+        fill_pct: ev.max_participants
+          ? Math.round((ev.registered_count / ev.max_participants) * 100)
+          : null,
+      };
+    });
   },
 
   // Retourne les participants d'un event — SEULEMENT si l'event appartient à organizerId
@@ -555,6 +567,46 @@ async bookEvent(eventId, userId) {
       [userId, organizerId]
     );
     return rows;
+  },
+
+  async getSearchSuggestions(keyword, city) {
+    const suggestions = { keywords: [], cities: [] };
+
+    // Statuts autorisés : 'published' en prod, + 'draft' pour les tests locaux
+    const ALLOWED_STATUSES = ['published', 'draft'];
+
+    if (keyword && keyword.length >= 2) {
+      const { rows } = await pool.query(
+        `SELECT DISTINCT title, city, category
+         FROM events
+         WHERE status = ANY($2::event_status[])
+           AND (title ILIKE $1 OR category::text ILIKE $1)
+         ORDER BY title ASC
+         LIMIT 8`,
+        [`%${keyword}%`, ALLOWED_STATUSES]
+      );
+      console.log(`[Autocomplete SQL] keyword="${keyword}" → ${rows.length} résultat(s)`);
+      suggestions.keywords = rows.map(r => ({
+        label: r.city ? `${r.title} à ${r.city}` : r.title,
+        value: r.title,
+      }));
+    }
+
+    if (city && city.length >= 2) {
+      const { rows } = await pool.query(
+        `SELECT DISTINCT city
+         FROM events
+         WHERE status = ANY($2::event_status[])
+           AND city ILIKE $1
+         ORDER BY city ASC
+         LIMIT 6`,
+        [`${city}%`, ALLOWED_STATUSES]
+      );
+      console.log(`[Autocomplete SQL] city="${city}" → ${rows.length} résultat(s)`);
+      suggestions.cities = rows.map(r => ({ label: r.city, value: r.city }));
+    }
+
+    return suggestions;
   },
 };
 

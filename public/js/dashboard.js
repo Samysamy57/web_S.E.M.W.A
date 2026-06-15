@@ -13,7 +13,7 @@ function statusBadge(status) {
     published: { bg: '#DCFCE7', color: '#16A34A', label: 'Live' },
     draft:     { bg: '#FEF9C3', color: '#B45309', label: 'Draft' },
     cancelled: { bg: '#FEF2F2', color: '#DC2626', label: 'Cancelled' },
-    completed: { bg: '#F1F5F9', color: '#475569', label: 'Completed' },
+    completed: { bg: '#F1F5F9', color: '#475569', label: 'Completed ✓' },
   };
   const s = map[status] ?? map.draft;
   return `<span class="status-badge" style="background:${s.bg};color:${s.color}">${s.label}</span>`;

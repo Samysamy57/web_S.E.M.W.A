@@ -386,9 +386,156 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
   window.location.href = '/';
 });
 
+// ─── AUTOCOMPLÉTION ──────────────────────────────────
+
+// Fonction debounce : attend que l'utilisateur ait arrêté de taper avant d'agir
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
+// Crée et injecte une suggestion-box sous un input donné
+function createSuggestionBox(inputEl, boxId) {
+  // Entoure l'input dans un wrapper relatif (pour positionner la liste absolument)
+  const parent = inputEl.parentElement;
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:relative;flex:1;display:flex';
+  parent.insertBefore(wrapper, inputEl);
+  wrapper.appendChild(inputEl);
+
+  // Crée la liste de suggestions
+  const box = document.createElement('ul');
+  box.id = boxId;
+  box.style.cssText = `
+    display:none;
+    position:absolute;
+    top:calc(100% + 4px);
+    left:0;
+    right:0;
+    background:#fff;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    box-shadow:var(--shadow-lg);
+    list-style:none;
+    z-index:300;
+    max-height:220px;
+    overflow-y:auto;
+    padding:4px 0;
+  `;
+  wrapper.appendChild(box);
+  return box;
+}
+
+// Remplit la suggestion-box avec les items fournis
+// onSelect(value) est appelé au clic sur un item
+function renderSuggestions(box, items, onSelect) {
+  if (!items.length) {
+    box.style.display = 'none';
+    return;
+  }
+
+  box.innerHTML = items.map((item, i) =>
+    `<li data-index="${i}" data-value="${item.value}" style="
+      padding:10px 16px;
+      font-size:.85rem;
+      cursor:pointer;
+      color:var(--slate);
+      border-radius:6px;
+      margin:2px 4px;
+      transition:.15s;
+    ">${item.label}</li>`
+  ).join('');
+
+  // Survol visuel
+  box.querySelectorAll('li').forEach(li => {
+    li.addEventListener('mouseenter', () => li.style.background = 'var(--blue-l)');
+    li.addEventListener('mouseleave', () => li.style.background = '');
+    li.addEventListener('click', () => {
+      onSelect(li.dataset.value);
+      box.style.display = 'none';
+    });
+  });
+
+  box.style.display = 'block';
+}
+
+// Initialise les deux suggestion-boxes
+function initAutocomplete() {
+  const keywordInput = document.getElementById('search-keyword');
+  const cityInput    = document.getElementById('search-city');
+
+  const keywordBox = createSuggestionBox(keywordInput, 'keyword-suggestions');
+  const cityBox    = createSuggestionBox(cityInput,    'city-suggestions');
+
+  // Fetch suggestions depuis le backend
+  const fetchSuggestions = debounce(async (keyword, city) => {
+    if (!keyword && !city) return;
+    try {
+      const params = new URLSearchParams();
+      if (keyword) params.set('keyword', keyword);
+      if (city)    params.set('city',    city);
+
+      console.log('[Autocomplete] Requête suggestions :', params.toString());
+
+      const res  = await fetch(`/api/search/suggestions?${params}`, { credentials: 'include' });
+
+      if (!res.ok) {
+        console.error('[Autocomplete] Erreur HTTP :', res.status, res.statusText);
+        return;
+      }
+
+      const data = await res.json();
+      console.log('[Autocomplete] Réponse API :', data);
+
+      if (keyword) {
+        console.log('[Autocomplete] Keywords trouvés :', data.keywords?.length ?? 0);
+        renderSuggestions(keywordBox, data.keywords || [], (val) => {
+          keywordInput.value = val;
+        });
+      }
+
+      if (city) {
+        console.log('[Autocomplete] Villes trouvées :', data.cities?.length ?? 0);
+        renderSuggestions(cityBox, data.cities || [], (val) => {
+          cityInput.value = val;
+        });
+      }
+    } catch (err) {
+      console.error('[Autocomplete Fetch Error]', err);
+    }
+  }, 250);
+
+  // Écouteurs sur les deux champs
+  keywordInput.addEventListener('input', () => {
+    const val = keywordInput.value.trim();
+    if (val.length < 2) { keywordBox.style.display = 'none'; return; }
+    fetchSuggestions(val, '');
+  });
+
+  cityInput.addEventListener('input', () => {
+    const val = cityInput.value.trim();
+    if (val.length < 2) { cityBox.style.display = 'none'; return; }
+    fetchSuggestions('', val);
+  });
+
+  // Ferme les listes si clic en dehors
+  document.addEventListener('click', (e) => {
+    if (!keywordInput.contains(e.target) && !keywordBox.contains(e.target)) {
+      keywordBox.style.display = 'none';
+    }
+    if (!cityInput.contains(e.target) && !cityBox.contains(e.target)) {
+      cityBox.style.display = 'none';
+    }
+  });
+}
+
 // ─── INIT ─────────────────────────────────────────────
 loadCurrentUser();
 fetchEvents();
+initAutocomplete();
 
 // Gestion du retour depuis Stripe (booking=success ou booking=cancelled)
 const urlParams = new URLSearchParams(window.location.search);

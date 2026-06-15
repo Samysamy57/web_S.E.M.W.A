@@ -13,7 +13,9 @@ const dashboardController = {
       // Nombre d'events actifs (publiés)
       const { rows: [evRow] } = await pool.query(
         `SELECT COUNT(*) AS count FROM events
-         WHERE created_by = $1 AND status = 'published'`,
+         WHERE created_by = $1
+           AND status = 'published'
+           AND COALESCE(end_date, start_date) >= NOW()`,
         [userId]
       );
 
