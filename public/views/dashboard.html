@@ -7,6 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/admin.css">
   <link rel="stylesheet" href="/css/conversation.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.12.1/html2pdf.bundle.min.js" integrity="sha512-D25Z8/1q2z65ZpJ3NzY6XiPZfwjhbv34OTQHDIZd+KPK+uWCovGt+fMkSzW8ArzCMFUgZt6Cdu7qoXNuy6a2GA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="/public/js/report_event.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -255,6 +257,7 @@
         <div class="sb-item" onclick="showSection('section-my-events')">🗓 <span>My Events</span><span class="sb-count" id="sb-events-count">–</span></div>
         <div class="sb-item" onclick="showSection('section-tickets')">🎫 <span>Tickets</span></div>
         <div class="sb-item" onclick="showSection('section-attendees')">👥 <span>Attendees</span></div>
+        <div class="sb-item" onclick="showSection('section-reports')">📋<span>Create a report</span></div>
       </div>
 
       <div class="sidebar-section" style="margin-top:14px">
@@ -658,7 +661,44 @@
         </div>
       </div>
 
-    </div><!-- /section-attendees -->
+    </div><!-- /section-reports -->
+
+        <div id="section-reports" class="dash-section section-hidden">
+
+      <div class="dash-header">
+        <div>
+          <h1 style="font-family:'Fraunces',serif;font-size:1.6rem">Reports</h1>
+          <p style="color:var(--slate3);font-size:.83rem;margin-top:2px">Create and view your event reports</p>
+        </div>
+      </div>
+
+      <div class="card" id="report-content">
+        <div class="card-title">Create a reports</div>
+        <div style="overflow-x:auto">
+          <table class="attendees-table" id="report-content">
+            <thead>
+              <tr>
+                <th id="report-content">Name event :</th>
+                <th id="report-content">Price :</th>
+                <th id="report-content">Total Sales :</th>
+                <th id="report-content">Type of event :</th>
+                <th id="report-content">Generate</th>
+              </tr>
+            </thead>
+            <tbody id="report-content">
+              <tr id="report-content">
+                <td><input type="text" id="report-content"></td>
+                <td><input type="text" id="report-content"></td>
+                <td><input type="text" id="report-content"></td>
+                <td><input type="text" id="report-content"></td>
+                <td><button id="generate-pdf">⬇️</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /section-report -->
 
     <div id="section-notifications" class="dash-section section-hidden">
       <div class="dash-header">
